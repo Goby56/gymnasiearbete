@@ -1,1 +1,1 @@
-# gymnasiearbete-ai
+# Gymnasiearbete AI
