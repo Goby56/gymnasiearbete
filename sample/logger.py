@@ -32,8 +32,6 @@ def log_function(post_after=False, timestamp=False) -> None:
         return wrapper
     return decorator
 
-    
-
 def print_post() -> None:
     """
     print_post is called at the end of the program regardless of errors.
