@@ -1,5 +1,3 @@
-# kommer att fungera som main-fil under projectet.
-import train
 import logger
 
 def main():
