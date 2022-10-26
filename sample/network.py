@@ -1,9 +1,6 @@
 import layer
 import model
-
 from typing import Callable
-
-
 
 class Network:
     def __init__(self, model: model.Model):
