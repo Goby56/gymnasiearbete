@@ -1,6 +1,8 @@
+from contextlib import contextmanager
 from enum import Enum
-from typing import Callable
 import os
+
+from model_file_formatter import file_formatter
 
 _MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 
@@ -17,9 +19,15 @@ class Model(Enum):
         self.structure = structure
 
         self._path = os.path.join(_MODEL_FOLDER, self._name_ + ".model")
+        self.have_wnb = os.path.exists(self._path)
 
-    def load_data(self):
+    @contextmanager
+    def load_wnb(self):
         with open(self._path) as file:
-            yield file # TODO: FORMAT INFORMATION AND YIELD NP.ARRAYS
+            yield file_formatter(file)
 
-assert os.path.exists(Model.model1._path)
+if __name__ == "__main__":
+    if Model.model1.have_wnb:
+        with Model.model1.load_wnb() as (weights, biases):
+            print(f"weights: {weights[0]}, biases: {biases[0]}")
+            
