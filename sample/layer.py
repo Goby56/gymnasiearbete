@@ -3,11 +3,10 @@ import numpy as np
 from typing import Callable
 
 class Layer:
-    def __init__(self, in_nodes: int, out_nodes: int):
-        # lagrerna tar in vikterna och bias i framtiden 
-        # så det går att spara dem
-        self.weights = np.full((in_nodes, out_nodes), 1)
-        self.bias = np.full((in_nodes), 1)
+    def __init__(self, in_nodes: int, out_nodes: int, 
+                 weights: np.array, biases: np.array):
+        self.weights = np.full((in_nodes, out_nodes), 1) if weights is None else weights
+        self.bias = np.full((in_nodes), 1) if biases is None else biases
 
     def run(self, inputs: np.array, activation_func: Callable[[float], float]):
         out_values = []
