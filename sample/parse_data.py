@@ -36,3 +36,17 @@ class CompiledDataset:
 
 
 dataset = CompiledDataset("emnist-balanced.mat")
+
+full_image = np.zeros((1, 28*4))
+i = 0
+for image, label in dataset.training_data:
+    if i > 100: break
+    row = image
+    row = np.concatenate((image, np.rot90(image)), axis=1)
+    row = np.concatenate((row, np.rot90(image, 2)), axis=1)
+    row = np.concatenate((row, np.rot90(image, 3)), axis=1)
+
+    full_image = np.concatenate((full_image, row), axis=0)
+    i += 1
+
+Image.fromarray(full_image).show()
