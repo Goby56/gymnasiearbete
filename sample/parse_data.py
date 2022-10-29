@@ -7,6 +7,18 @@ import numpy as np
 
 
 class CompiledDataset:
+    """
+    # CompiledDataset
+    Used to represent the EMNIST datasets located at data\\EMNIST. Provides an easy way to gather batches of
+    samples with a validation partition that, if specified also will be provided as a means to measure the 
+    performance of the model. The length of this partition is determined by the length of the test data also
+    accessible with this class.
+
+    ## Args:
+    dataset_filename: String argument needs to be a valid file name within the EMNIST data folder
+
+    validation_partition: Booleon determining wheter or not to extract validation data
+    """
     __data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 
     def __init__(self, dataset_filename: str, validation_partition = False):
@@ -18,7 +30,7 @@ class CompiledDataset:
         self._data = loadmat(filepath, simplify_cells = True)["dataset"]
 
         training_len = len(self._data["train"]["labels"])
-        partition_len = len(self._data["test"]["labels"])
+        partition_len = len(self._data["test"]["labels"]) if validation_partition else 0
         
         self.training_data = self._create_labeled_generator("train", slice(0, training_len-partition_len))
         self.test_data = self._create_labeled_generator("test", slice(0, partition_len))
