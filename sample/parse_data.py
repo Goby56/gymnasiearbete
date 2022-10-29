@@ -5,22 +5,34 @@ import numpy as np
 
 # https://www.nist.gov/itl/products-and-services/emnist-dataset
 
-__data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+
+class CompiledDataset:
+    __data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+
+    def __init__(self, dataset_filename: str, validation_partition = False):
+        filepath = os.path.join(self.__data_dir, "EMNIST", dataset_filename)
+
+        if not os.path.exists(filepath):
+            raise Exception("Dataset not found! Download the EMNIST dataset from Google Drive")
+
+        self._data = loadmat(filepath, simplify_cells = True)["dataset"]
+
+        training_len = len(self._data["train"]["labels"])
+        partition_len = len(self._data["test"]["labels"])
+        
+        self.training_data = self._create_labeled_generator("train", slice(0, training_len-partition_len))
+        self.test_data = self._create_labeled_generator("test", slice(0, partition_len))
+        self.validation_data = self._create_labeled_generator("train", slice(training_len-partition_len, training_len))
+
+    def _create_labeled_generator(self, target: str, interval: slice):
+        assert target in ["train", "test"], "arg. target not of type 'train', 'test' or 'validation'"
+        targeted_data = self._data[target]
+        for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
+            yield (np.reshape(image, (28, 28)), label)
+
+    def next_batch(self):
+        # Yield a batch of size n
+        pass
 
 
-if not os.path.exists(os.path.join(__data_dir, "EMNIST")):
-    raise Exception("Download the EMNIST dataset from Google Drive")
-
-emnist_data = loadmat(os.path.join(__data_dir, "EMNIST", "emnist-letters.mat"))["dataset"][0][0][0][0][0]
-
-def get_data(data):
-    key = "abcdefghijklmnopqrstuvwxyz"
-    for i, img in enumerate(data[0]):
-        img_arr = np.flip(np.rot90(img.reshape((28, 28)), -1), 1)
-        yield key[data[1][i][0]-1], img_arr
-
-i = 0
-for label, image in get_data(emnist_data):
-    if i > 10: break
-    Image.fromarray(image).save(f"image_tests/{label}.png")
-    i += 1
+dataset = CompiledDataset("emnist-balanced.mat")
