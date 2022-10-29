@@ -8,13 +8,13 @@ import numpy as np
 
 class CompiledDataset:
     """
-    # CompiledDataset
-    Used to represent the EMNIST datasets located at data\\EMNIST. Provides an easy way to gather batches of
-    samples with a validation partition that, if specified also will be provided as a means to measure the 
-    performance of the model. The length of this partition is determined by the length of the test data also
-    accessible with this class.
+    ## CompiledDataset
+    Used to represent the EMNIST datasets located at "data\\EMNIST". Provides an easy way to gather batches of
+    samples which has a validation partition that, if specified, will be provided as a means to measure the 
+    performance of the model. The length of this partition is determined by the length of the test data which
+    also is accessible with this class.
 
-    ## Args:
+    ### Args:
     dataset_filename: String argument needs to be a valid file name within the EMNIST data folder
 
     validation_partition: Booleon determining wheter or not to extract validation data
