@@ -39,8 +39,10 @@ class CompiledDataset:
     def __create_labeled_generator(self, target: str, interval: slice):
         assert target in ["train", "test"], "arg. target not of type 'train', 'test' or 'validation'"
         targeted_data = self._data[target]
+        start_index = self._data["mapping"][0][0]
         for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
-            char = chr(self._data["mapping"][label][1])
+            
+            char = chr(self._data["mapping"][label-start_index][1])
             arr = np.flip(np.rot90(np.reshape(image, (28, 28)), -1), -1)
             yield (arr, char)
 
@@ -49,4 +51,4 @@ class CompiledDataset:
             yield next(self.training_data)
 
 
-dataset = CompiledDataset("emnist-balanced.mat", validation_partition=True)
+dataset = CompiledDataset("emnist-letters.mat", validation_partition=True)
