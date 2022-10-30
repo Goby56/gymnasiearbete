@@ -3,8 +3,6 @@ from scipy.io import loadmat
 from PIL import Image
 import numpy as np
 
-# https://www.nist.gov/itl/products-and-services/emnist-dataset
-
 
 class CompiledDataset:
     """
@@ -18,6 +16,8 @@ class CompiledDataset:
     dataset_filename: String argument needs to be a valid file name within the EMNIST data folder
 
     validation_partition: Booleon determining wheter or not to extract validation data
+
+    https://www.nist.gov/itl/products-and-services/emnist-dataset
     """
     __data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 
@@ -30,35 +30,23 @@ class CompiledDataset:
         self._data = loadmat(filepath, simplify_cells = True)["dataset"]
 
         training_len = len(self._data["train"]["labels"])
-        partition_len = len(self._data["test"]["labels"]) if validation_partition else 0
+        partition_len = len(self._data["test"]["labels"])
         
-        self.training_data = self._create_labeled_generator("train", slice(0, training_len-partition_len))
-        self.test_data = self._create_labeled_generator("test", slice(0, partition_len))
-        self.validation_data = self._create_labeled_generator("train", slice(training_len-partition_len, training_len))
+        self.training_data = self.__create_labeled_generator("train", slice(0, training_len - partition_len*validation_partition))
+        self.test_data = self.__create_labeled_generator("test", slice(0, partition_len))
+        self.validation_data = self.__create_labeled_generator("train", slice(training_len - partition_len*validation_partition, training_len))
 
-    def _create_labeled_generator(self, target: str, interval: slice):
+    def __create_labeled_generator(self, target: str, interval: slice):
         assert target in ["train", "test"], "arg. target not of type 'train', 'test' or 'validation'"
         targeted_data = self._data[target]
         for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
-            yield (np.reshape(image, (28, 28)), label)
+            char = chr(self._data["mapping"][label][1])
+            arr = np.flip(np.rot90(np.reshape(image, (28, 28)), -1), -1)
+            yield (arr, char)
 
-    def next_batch(self):
-        # Yield a batch of size n
-        pass
+    def next_batch(self, batch_size: int):
+        for _ in range(batch_size):
+            yield next(self.training_data)
 
 
-dataset = CompiledDataset("emnist-balanced.mat")
-
-full_image = np.zeros((1, 28*4))
-i = 0
-for image, label in dataset.training_data:
-    if i > 100: break
-    row = image
-    row = np.concatenate((image, np.rot90(image)), axis=1)
-    row = np.concatenate((row, np.rot90(image, 2)), axis=1)
-    row = np.concatenate((row, np.rot90(image, 3)), axis=1)
-
-    full_image = np.concatenate((full_image, row), axis=0)
-    i += 1
-
-Image.fromarray(full_image).show()
+dataset = CompiledDataset("emnist-balanced.mat", validation_partition=True)
