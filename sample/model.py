@@ -18,7 +18,7 @@ class Model(Enum):
         self.learn_rate = learn_rate
         self.structure = structure
 
-        self._path = os.path.join(_MODEL_FOLDER, self._name_ + ".model")
+        self._path = os.path.join(_MODEL_FOLDER, self._name_ + ".wnb")
         self.have_wnb = os.path.exists(self._path)
 
     def load_wnb(self):
