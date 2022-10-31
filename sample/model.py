@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from enum import Enum
-import os
+import os, math
 
 from model_file_formatter import file_reader, str_writer
 
@@ -8,6 +8,9 @@ _MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 
 class Activation(Enum):
     ReLU = lambda x: max(0, x)
+    SiLU = lambda x: x / (1 + math.exp(-x))
+    Sigmoid = lambda x: 1 / (1 + math.exp(-x))
+    Bad = lambda x: float(x > 0)
 
 class Model(Enum):
     model1 = (Activation.ReLU, 1, (2, 3, 2))
@@ -22,7 +25,7 @@ class Model(Enum):
         self.have_wnb = os.path.exists(self._path)
 
     def load_wnb(self):
-        if not self._path: return None, None
+        if not self.have_wnb: return None, None
         with open(self._path) as file:
             return file_reader(file)
 
