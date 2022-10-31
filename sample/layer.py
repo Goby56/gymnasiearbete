@@ -7,6 +7,7 @@ class Layer:
     def __init__(self, weights: np.ndarray, biases: np.ndarray):
         self.weights = weights
         self.bias = biases
+        self.in_nodes, self.out_nodes = weights.shape
 
     def execute(self, inputs: np.ndarray, activation_func: model.Activation) -> np.ndarray:
         out_values = []
