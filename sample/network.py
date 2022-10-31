@@ -1,3 +1,5 @@
+import numpy as np
+
 import layer
 import model
 from typing import Callable
@@ -11,3 +13,8 @@ class Network:
             layer.append(layer.Layer(self.model.structure[i], 
                                      self.model.structure[i+1], 
                                      w, b))
+
+    def execute(self, inputs: np.ndarray):
+        for layer in self.layers:
+            inputs = layer.execute(inputs)
+        return inputs
