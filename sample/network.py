@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Generator, Iterable
 
 import layer, model, data
 
@@ -23,6 +24,13 @@ class Network:
             else:
                 yield (weights[i], biases[i])
 
+    def save_wnb(self):
+        w, b = [], []
+        for layer in self.layers:
+            w.append(layer.weights)
+            b.append(layer.bias)
+        self.model.save_wnb(w, b)
+
     def execute(self, inputs: np.ndarray) -> np.ndarray:
         for layer in self.layers:
             inputs = layer.execute(inputs, self.model.activation_func)
@@ -45,25 +53,50 @@ class Network:
         layer_loss = map(self.__node_loss, self.execute(data_in), data_out)
         return sum(layer_loss)
 
-    def train(self, data: list[tuple[np.ndarray, np.ndarray]]):
+    def intervall_loss(self, data: Iterable) -> float:
+        cost = 0
+        for _data in data:
+            cost += self.loss(*_data)
+        return cost
+
+    def train(self, data: Iterable):
         """
         Tweaks the weight and bias values in the network\n
-        data: should be a list of tuples containing:\n
+        data: should be a iteratable yielding tuples containing:\n
             1. a flatten np.ndarray of image data
             2. a np.ndarray of zeros, containng one "1", representing the label after the datasets mapping
         """
+        h = 0.0001
+        cost = self.intervall_loss(data)
 
+        for layer in self.layers:
+            weight_gradient = np.empty(layer.weights.shape)
+            bias_gradient = np.empty(layer.bias.shape)
+            for out in range(layer.out_nodes):
+                for _in in range(layer.in_nodes):
+                    layer.weights[_in, out] += h
+                    dc = self.intervall_loss(data) - cost
+                    layer.weights[_in, out] -= h
+                    weight_gradient[_in, out] = dc / h
+                
+                layer.bias[out] += h
+                dc = self.intervall_loss(data) - cost
+                layer.bias[out] -= h
+                bias_gradient[out] = dc / h
+
+            layer.bias -= bias_gradient * self.model.learn_rate
+            layer.weights -= weight_gradient * self.model.learn_rate
 
 
 if __name__ == "__main__":
     network = Network(model.Model.test_model)
     dataset = data.CompiledDataset("emnist-letters.mat", validation_partition=True, 
                                    as_array=True, flatten=True)
-    costs = [network.loss(*_data) for _data in dataset.next_batch(10)]
-    print(f"COST: {sum(costs)/10}")
+    tdata = next(dataset.next_batch(1))
+    print(network.execute(tdata[0]), tdata[1])
+    print("-------------- training ----------------")
+    network.train(dataset.next_batch(1000))
+    tdata = next(dataset.next_batch(1))
+    print(network.execute(tdata[0]), tdata[1])
 
-    weights, biases = [], []
-    for layer in network.layers:
-        weights.append(layer.weights)
-        biases.append(layer.bias)
-    network.model.save_wnb(weights, biases)
+    # network.save_wnb()
