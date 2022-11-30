@@ -13,7 +13,7 @@ class Activation(Enum):
 
 class Model(Enum):
     model1 = (Activation.ReLU, 1, (2, 3, 2))
-    test_model = (Activation.ReLU, 0.02, (28*28, 100, 26))
+    test_model = (Activation.Sigmoid, 0.3, (28*28, 100, 26))
 
     def __init__(self, activation_func: Activation,
                  learn_rate: int, structure: tuple[int]):
