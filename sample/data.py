@@ -21,7 +21,7 @@ class CompiledDataset:
     __data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 
     def __init__(self, dataset_filename: str, validation_partition = False, 
-                 as_array = False, flatten = False):
+                 as_array = False, flatten = False, normalize = False):
         filepath = os.path.join(self.__data_dir, "EMNIST", dataset_filename)
 
         if not os.path.exists(filepath):
@@ -30,6 +30,7 @@ class CompiledDataset:
         self.__data = loadmat(filepath, simplify_cells = True)["dataset"]
         self.__as_array = as_array
         self.__flatten = flatten
+        self.__normalize = normalize
 
         training_len = len(self.__data["train"]["labels"])
         partition_len = len(self.__data["test"]["labels"])
@@ -50,8 +51,12 @@ class CompiledDataset:
         targeted_data = self.__data[target]
         for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
             image = np.flip(np.rot90(np.reshape(image, (28, 28)), -1), -1)
-            yield (image.flatten() if self.__flatten else image,
-                   self.__label_type(label))
+
+            # argument clauses
+            image = image.flatten() if self.__flatten else image
+            image = image / 255 if self.__normalize else image
+            
+            yield (image, self.__label_type(label))
 
     def next_batch(self, batch_size: int):
         for _ in range(batch_size):
