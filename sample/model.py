@@ -1,15 +1,11 @@
 from enum import Enum
-import os, math
+import os
 
+from functions import Activation
 from model_file_formatter import file_reader, str_writer
 
-_MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 
-class Activation(Enum):
-    ReLU = lambda x: max(0, x)
-    SiLU = lambda x: x / (1 + math.exp(-x))
-    Sigmoid = lambda x: 1 / (1 + math.exp(-x))
-    Bad = lambda x: float(x > 0)
+_MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 
 class Model(Enum):
     model1 = (Activation.ReLU, 1, (2, 3, 2))
