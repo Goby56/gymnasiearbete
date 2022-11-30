@@ -10,12 +10,7 @@ class Layer:
         self.in_nodes, self.out_nodes = weights.shape
 
     def execute(self, inputs: np.ndarray, activation_func: model.Activation) -> np.ndarray:
-        out_values = []
-        for node, node_weight, node_bias in zip(inputs, self.weights, self.bias):
-            out_node = activation_func(sum(node*node_weight) + node_bias)
-            out_values.append(out_node)
-        return np.asarray(out_values)
-
-
-if __name__ == "__main__":
-    print("haha")
+        a = np.dot(inputs, self.weights) + self.bias # Fig. 2
+        for i, b in enumerate(a):
+            a[i] = activation_func(b)
+        return a
