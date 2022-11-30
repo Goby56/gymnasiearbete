@@ -57,26 +57,13 @@ class Network:
             1. a flatten np.ndarray of image data
             2. a np.ndarray of zeros, containng one "1", representing the label after the datasets mapping
         """
-        h = 0.0001
-        cost = self.calculate_loss(data)
 
-        for layer in self.layers:
-            weight_gradient = np.empty(layer.weights.shape)
-            bias_gradient = np.empty(layer.bias.shape)
-            for out in range(layer.out_nodes):
-                for _in in range(layer.in_nodes):
-                    layer.weights[_in, out] += h
-                    dc = self.intervall_loss(data) - cost
-                    layer.weights[_in, out] -= h
-                    weight_gradient[_in, out] = dc / h
-                
-                layer.bias[out] += h
-                dc = self.intervall_loss(data) - cost
-                layer.bias[out] -= h
-                bias_gradient[out] = dc / h
+        back_input = None # Loss backpropagation
+        for layer in self.layers[::-1]:
+            for i, v in enumerate(back_input.copy()):
+                back_input[i] = self.model.activation_func.df(v) * v
+            back_input = layer.back(back_input, self.model.learn_rate)
 
-            layer.bias -= bias_gradient * self.model.learn_rate
-            layer.weights -= weight_gradient * self.model.learn_rate
 
 
 if __name__ == "__main__":
