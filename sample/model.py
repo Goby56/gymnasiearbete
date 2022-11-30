@@ -9,7 +9,7 @@ _MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 
 class Model(Enum):
     model1 = (Activation.ReLU, Loss_CCE, 1, (2, 3, 2))
-    test_model = (Activation.Sigmoid, Loss_CCE, 0.3, (28*28, 100, 26))
+    test_model = (Activation.Sigmoid, Loss_CCE, 5, (28*28, 100, 26))
 
     def __init__(self, activation_func: Activation, loss_func: Loss, 
                  learn_rate: int, structure: tuple[int]):

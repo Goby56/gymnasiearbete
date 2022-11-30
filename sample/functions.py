@@ -30,12 +30,13 @@ class Loss:
     def forward(batch_outputs: np.ndarray, batch_targets: np.ndarray) -> float:
         raise NotImplementedError
 
-    def backward():
+    def backward(batch_outputs: np.ndarray, batch_targets: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
 class Loss_CCE(Loss): 
     """
-    Categorical Cross-Entropy loss function
+    Forward and backward pass of the Categorical Cross-Entropy loss function. Backward pass
+    also calculates the derivative of the Soft-Max function.
     """
     def forward(batch_outputs: np.ndarray, batch_targets: np.ndarray):
         batch_outputs = np.clip(batch_outputs, 1e-7, 1-1e-7)
@@ -43,5 +44,8 @@ class Loss_CCE(Loss):
         losses = -np.log(confidences)
         return np.mean(losses)
 
-    def backward():
-        pass
+    def backward(batch_outputs: np.ndarray, batch_targets: np.ndarray):
+        num_of_samples = len(batch_outputs)
+        backprop_input = batch_outputs.copy()
+        backprop_input[range(num_of_samples), np.argmax(batch_targets, axis=1)] -= 1
+        return backprop_input / num_of_samples

@@ -23,7 +23,7 @@ class Layer:
         """
         backward pass through the network
         """
-        out = np.dot(dvalues, self.weights)
-        self.weights -= learn_rate * np.dot(self.inputs, dvalues)
+        out = np.dot(dvalues, self.weights.T)
         self.bias -= learn_rate * np.sum(dvalues, keepdims=True)
+        self.weights -= learn_rate * np.dot(self.inputs, dvalues.T)
         return out

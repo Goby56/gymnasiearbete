@@ -236,6 +236,7 @@ for epoch in range(10001):
               f'lr: {optimizer.current_learning_rate}')
     # Backward pass
     loss_activation.backward(loss_activation.output, y)
+    # print(len(loss_activation.dinputs))
     dense2.backward(loss_activation.dinputs)
     activation1.backward(dense2.dinputs)
     dense1.backward(activation1.dinputs)

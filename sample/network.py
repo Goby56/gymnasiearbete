@@ -34,46 +34,47 @@ class Network:
     def execute(self, inputs: np.ndarray) -> np.ndarray:
         for layer in self.layers:
             inputs = layer.execute(inputs, self.model.activation_func)
-        # Soft-max function on output values
+        # Normalization using Soft-Max function
         exp_out = np.exp(inputs)
         layer_sum = np.sum(exp_out)
         confidence_scores = exp_out / layer_sum
         return confidence_scores
 
-    def calculate_loss(self, data: Iterable) -> float:
-        batch_outputs = np.array([])
-        batch_targets = np.array([])
+    def run_batch(self, data: Iterable) -> float:
+        batch_outputs = []
+        batch_targets = []
         for sample in data:
             batch_outputs.append(self.execute(sample[0]))
             batch_targets.append(sample[1])
-        
-        batch_loss = self.model.loss_func.forward(batch_outputs, batch_targets)
-        return batch_loss
-        
+        return np.array(batch_outputs), np.array(batch_targets)
+
     def train(self, data: Iterable):
-        """
-        Tweaks the weight and bias values in the network\n
-        data: should be a iteratable yielding tuples containing:\n
-            1. a flatten np.ndarray of image data
-            2. a np.ndarray of zeros, containng one "1", representing the label after the datasets mapping
-        """
+        batch_outputs, batch_targets = self.run_batch(data)
+        batch_loss = self.model.loss_func.forward(batch_outputs, batch_targets)
 
-        back_input = None # Loss backpropagation
+        # TODO fix batch backprop problem (matrix is being inputed instead of vector)
+        batches = self.model.loss_func.backward(batch_outputs, batch_targets)# Loss backpropagation
+        backprop_input = batches[0]
+        for batch in batches:
+            backprop_input += batch
+        backprop_input /= 10
+        
+        print("Loss:", batch_loss)
+
         for layer in self.layers[::-1]:
-            for i, v in enumerate(back_input.copy()):
-                back_input[i] = self.model.activation_func.df(v) * v
-            back_input = layer.back(back_input, self.model.learn_rate)
-
+            for i, v in enumerate(backprop_input.copy()):
+                backprop_input[i] = self.model.activation_func.df(v) * v
+            backprop_input = layer.back(backprop_input, self.model.learn_rate)
+            # print(layer.weights)
 
 
 if __name__ == "__main__":
     network = Network(model.Model.test_model)
     dataset = data.CompiledDataset("emnist-letters.mat", validation_partition=True, 
-                                   as_array=True, flatten=True)
-    tdata = next(dataset.next_batch(1))
-    print(network.execute(tdata[0]), tdata[1])
+                                   as_array=True, flatten=True, normalize=True)
     print("-------------- Training ----------------")
-    network.train(dataset.next_batch(1000))
+    for _ in range(1000):
+        network.train(dataset.next_batch(10))
     tdata = next(dataset.next_batch(1))
     print(network.execute(tdata[0]), tdata[1])
 
