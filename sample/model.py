@@ -1,19 +1,20 @@
 from enum import Enum
 import os
 
-from functions import Activation
+from functions import Activation, Loss, Loss_CCE
 from model_file_formatter import file_reader, str_writer
 
 
 _MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 
 class Model(Enum):
-    model1 = (Activation.ReLU, 1, (2, 3, 2))
-    test_model = (Activation.Sigmoid, 0.3, (28*28, 100, 26))
+    model1 = (Activation.ReLU, Loss_CCE, 1, (2, 3, 2))
+    test_model = (Activation.Sigmoid, Loss_CCE, 0.3, (28*28, 100, 26))
 
-    def __init__(self, activation_func: Activation,
+    def __init__(self, activation_func: Activation, loss_func: Loss, 
                  learn_rate: int, structure: tuple[int]):
         self.activation_func = activation_func
+        self.loss_func = loss_func
         self.learn_rate = learn_rate
         self.structure = structure
 

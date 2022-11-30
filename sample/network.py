@@ -31,40 +31,25 @@ class Network:
             b.append(layer.bias)
         self.model.save_wnb(w, b)
 
-    def execute(self, inputs: np.ndarray, show_scores = False) -> np.ndarray:
+    def execute(self, inputs: np.ndarray) -> np.ndarray:
         for layer in self.layers:
             inputs = layer.execute(inputs, self.model.activation_func)
         # Soft-max function on output values
         exp_out = np.exp(inputs)
         layer_sum = np.sum(exp_out)
         confidence_scores = exp_out / layer_sum
-        if show_scores: 
-            print("Probability sums:", np.sum(confidence_scores))
         return confidence_scores
 
-    @staticmethod
-    def __node_loss(out: float, expected: float) -> float:
-        error = out - expected
-        return error * error
-
-    def loss(self, data_in: np.ndarray, data_out: np.ndarray) -> float:
-        """
-        Find the total network loss for one "image".
-        data_in: np.ndarray should be a flattend array containing the image data
-        data_out: np.ndarray should be an array of zeros, conatining only one "1" at the spot
-        corresponding with it's label acording to the dataset mapping.
-
-        returns float
-        """
-        layer_loss = map(self.__node_loss, self.execute(data_in), data_out)
-        return sum(layer_loss)
-
-    def intervall_loss(self, data: Iterable) -> float:
-        cost = 0
-        for _data in data:
-            cost += self.loss(*_data)
-        return cost
-
+    def calculate_loss(self, data: Iterable) -> float:
+        batch_outputs = np.array([])
+        batch_targets = np.array([])
+        for sample in data:
+            batch_outputs.append(self.execute(sample[0]))
+            batch_targets.append(sample[1])
+        
+        batch_loss = self.model.loss_func.forward(batch_outputs, batch_targets)
+        return batch_loss
+        
     def train(self, data: Iterable):
         """
         Tweaks the weight and bias values in the network\n
@@ -73,7 +58,7 @@ class Network:
             2. a np.ndarray of zeros, containng one "1", representing the label after the datasets mapping
         """
         h = 0.0001
-        cost = self.intervall_loss(data)
+        cost = self.calculate_loss(data)
 
         for layer in self.layers:
             weight_gradient = np.empty(layer.weights.shape)
@@ -99,7 +84,7 @@ if __name__ == "__main__":
     dataset = data.CompiledDataset("emnist-letters.mat", validation_partition=True, 
                                    as_array=True, flatten=True)
     tdata = next(dataset.next_batch(1))
-    print(network.execute(tdata[0], True), tdata[1])
+    print(network.execute(tdata[0]), tdata[1])
     print("-------------- Training ----------------")
     network.train(dataset.next_batch(1000))
     tdata = next(dataset.next_batch(1))
