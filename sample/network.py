@@ -31,10 +31,16 @@ class Network:
             b.append(layer.bias)
         self.model.save_wnb(w, b)
 
-    def execute(self, inputs: np.ndarray) -> np.ndarray:
+    def execute(self, inputs: np.ndarray, show_scores = False) -> np.ndarray:
         for layer in self.layers:
             inputs = layer.execute(inputs, self.model.activation_func)
-        return inputs
+        # Soft-max function on output values
+        exp_out = np.exp(inputs)
+        layer_sum = np.sum(exp_out)
+        confidence_scores = exp_out / layer_sum
+        if show_scores: 
+            print("Probability sums:", np.sum(confidence_scores))
+        return confidence_scores
 
     @staticmethod
     def __node_loss(out: float, expected: float) -> float:
@@ -93,8 +99,8 @@ if __name__ == "__main__":
     dataset = data.CompiledDataset("emnist-letters.mat", validation_partition=True, 
                                    as_array=True, flatten=True)
     tdata = next(dataset.next_batch(1))
-    print(network.execute(tdata[0]), tdata[1])
-    print("-------------- training ----------------")
+    print(network.execute(tdata[0], True), tdata[1])
+    print("-------------- Training ----------------")
     network.train(dataset.next_batch(1000))
     tdata = next(dataset.next_batch(1))
     print(network.execute(tdata[0]), tdata[1])
