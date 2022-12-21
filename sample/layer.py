@@ -1,23 +1,30 @@
 import numpy as np
 from typing import Callable
 
-import model
+import model, logger
 
 class Layer:
+    id = 0
     def __init__(self, weights: np.ndarray, biases: np.ndarray):
         self.weights = weights
         self.bias = biases
         self.in_nodes, self.out_nodes = weights.shape
+        self.id = Layer.id
+        Layer.id += 1
 
         self.dweights = np.zeros(weights.shape)
         self.dbias = np.zeros(biases.shape)
 
+    #@logger.log_function()
     def execute(self, inputs: np.ndarray, activation_func: model.Activation) -> np.ndarray:
         """
         forward pass through the network
         """
+        # TODO: fuckar nätverket. fixa. nice!
+        raise Exception("HÄR ÄR ETT FEL. DET MÅSTE FIXAS. EFTER FÖRSTA GÅNGEN DEN KÖRS RETURNAS BARA ETTOR, AKTIVERINGSFUNTIONEN GÖR SÅ ALLA TAL BLIR ETT REEEEE REEEE RAHHH")
         self.inputs = inputs
         output = np.dot(inputs, self.weights) + self.bias # Fig. 2
+        
         with np.nditer(output, op_flags=["readwrite"]) as it: # Iterate and modify all elements
             for value in it: value[...] = activation_func(value)
         return output
