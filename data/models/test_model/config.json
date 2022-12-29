@@ -1,0 +1,19 @@
+{
+    "setup": {
+        "activation_function": "ReLU",
+        "structure": [
+            784, 128, 128, 26
+        ]
+    },
+
+    "training": {
+        "accuracy_function": "Categorical",
+        "loss_function": "CCE",
+        "optimizer": "",
+        "optimizer_decay": "",
+        "dataset": "emnist-letters.mat",
+        "batch_size": 128,
+        "epochs": 1,
+        "learn_rate": 0.03
+    }
+}
