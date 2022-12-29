@@ -20,9 +20,14 @@ class CompiledDataset:
     """
     __data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 
-    def __init__(self, dataset_filename: str, validation_partition = False, 
-                 as_array = False, flatten = False, normalize = False):
-        filepath = os.path.join(self.__data_dir, "EMNIST", dataset_filename)
+    def __init__(self, *,
+        filename: str,
+        validation_partition: bool, 
+        as_array: bool, 
+        flatten: bool,
+        normalize: bool
+    ):
+        filepath = os.path.join(self.__data_dir, "EMNIST", filename)
 
         if not os.path.exists(filepath):
             raise Exception("Dataset not found! Download the EMNIST dataset from Google Drive")
@@ -39,6 +44,15 @@ class CompiledDataset:
         self.test_data = self.__create_labeled_generator("test", slice(0, partition_len))
         self.validation_data = self.__create_labeled_generator("train", slice(training_len - partition_len*validation_partition, training_len))
 
+        self.training_len = training_len - partition_len*validation_partition
+        self.validation_len = partition_len*validation_partition
+
+        if self.__flatten and self.__as_array:
+            img, lbl = next(self.training_data)
+            self.shape = (len(img), len(lbl))
+        else:
+            self.shape = (None, None)
+
     def __label_type(self, label: str) -> Union[str, np.ndarray]:
         index = label-self.__data["mapping"][0][0]
         if not self.__as_array: return chr(self.__data["mapping"][index][1])
@@ -54,13 +68,14 @@ class CompiledDataset:
 
             # argument clauses
             image = image.flatten() if self.__flatten else image
-            image = image / 255 if self.__normalize else image
+            image = image / 127.5 - 1 if self.__normalize else image
             
             yield (image, self.__label_type(label))
 
     def next_batch(self, batch_size: int):
         for _ in range(batch_size):
             yield next(self.training_data)
+            
 
 
 if __name__ == "__main__":
