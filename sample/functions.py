@@ -4,49 +4,90 @@ from typing import Callable
 import math
 import numpy as np
 
+# class Activation(Enum):
+#     ReLU = (lambda x: max(0, x), lambda x: x > 0)
+#     Sigmoid = (lambda x: 1 / (1 + np.exp(-_K1*x)),
+#                lambda x: (_K1*np.exp(-_K1*x))/np.power((np.exp(-_K1*x)+1), 2))
+#     Step = (lambda x: x > 0, lambda x: 0)
 
-class Activation(Enum):
-    ReLU = (lambda x: max(0, x), lambda x: x > 0)
-    Sigmoid = (lambda x: 1 / (1 + np.exp(-x)),
-               lambda x: (1 / (1 + np.exp(-x))) * (1-(1 / (1 + np.exp(-x)))))
-    Step = (lambda x: x > 0, lambda x: 0)
 
-    SiLU = lambda x: x / (1 + np.exp(-x)) # deprecated for now
+#     def __init__(self, func: Callable, derivative: Callable):
+#         self.__f = func
+#         self.__df = derivative
 
-    def __init__(self, func: Callable, derivative: Callable):
-        self.__f = func
-        self.__df = derivative
+#     def f(self, __x: float) -> float:
+#         return float(self.__f(__x))
 
-    def f(self, __x: float) -> float:
-        return float(self.__f(__x))
+#     def df(self, __x: float) -> float:
+#         return float(self.__df(__x))
 
-    def df(self, __x: float) -> float:
-        return float(self.__df(__x))
+#     def __call__(self, __x: float) -> float:
+#         return self.f(__x)
 
-    def __call__(self, __x: float) -> float:
-        return self.f(__x)
+#     def __str__(self):
+#         return self._name_
+
+class Activation_ReLU:
+    def f(self, x):
+        return max(0, x)
+
+    def df(self, x):
+        return x > 0
+
+
+class Activation_Sigmoid:
+
+    __k = 1
+
+    def f(self, x):
+        return 1 / (1 + np.exp(-self.__k*x))
+
+    def df(self, x):
+        y = self.__k*x
+        return self.__k*np.exp(-y)/np.power(np.exp(-y)+1, 2)
+
+class Activation_Step:
+    def f(self, x):
+        return x > 0
+
+    def df(self, x):
+        return 0
+
 
 # region Loss
 
 class Loss:
-    def forward(batch_outputs: np.ndarray, batch_targets: np.ndarray) -> float:
-        raise NotImplementedError
+    def __init__(self):
+        self.reset_accumulation()
 
-    def backward(batch_outputs: np.ndarray, batch_targets: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
+    def reset_accumulation(self):
+        self.accumulated_sum = 0
+        self.accumulated_count = 0
+    
+    def calculate(self, batch_outputs: np.ndarray, batch_targets: np.ndarray):
+        batch_loss = self.forward(batch_outputs, batch_targets)
+        self.accumulated_sum += np.sum(batch_loss)
+        self.accumulated_count += len(batch_loss)
+        return np.mean(batch_loss)
 
-class Loss_CCE(Loss): 
+    def calculate_accumulated(self):
+        accumulated_loss = self.accumulated_sum / self.accumulated_count
+        self.reset_accumulation()
+        return accumulated_loss
+        
+
+class Loss_CCE(Loss):
     """
     Forward and backward pass of the Categorical Cross-Entropy loss function. Backward pass
-    also calculates the derivative of the Soft-Max function.
+    also includes the derivative of the Soft-Max function.
     """
-    def forward(batch_outputs: np.ndarray, batch_targets: np.ndarray):
+    def forward(self, batch_outputs: np.ndarray, batch_targets: np.ndarray):
         batch_outputs = np.clip(batch_outputs, 1e-7, 1-1e-7)
         confidences = np.sum(batch_outputs*batch_targets, axis=1)
         losses = -np.log(confidences)
-        return np.mean(losses)
+        return losses
 
-    def backward(batch_outputs: np.ndarray, batch_targets: np.ndarray):
+    def backward(self, batch_outputs: np.ndarray, batch_targets: np.ndarray):
         num_of_samples = len(batch_outputs)
         backprop_input = batch_outputs.copy()
         backprop_input[range(num_of_samples), np.argmax(batch_targets, axis=1)] -= 1
@@ -55,10 +96,29 @@ class Loss_CCE(Loss):
 # endregion Loss
 
 class Accuracy:
-    @staticmethod
-    def calc(batch_outputs: np.ndarray, batch_targets: np.ndarray):
+    def __init__(self):
+        self.reset_accumulation()
+
+    def reset_accumulation(self):
+        self.accumulated_sum = 0
+        self.accumulated_count = 0
+
+    def calculate(self, batch_outputs: np.ndarray, batch_targets: np.ndarray):
+        comparisons = self.compare(batch_outputs, batch_targets)
+        accuracy = np.mean(comparisons)
+        self.accumulated_sum += np.sum(comparisons)
+        self.accumulated_count += len(comparisons)
+        return accuracy
+
+    def calculate_accumulated(self):
+        accumulated_accuracy = self.accumulated_sum / self.accumulated_count
+        self.reset_accumulation()
+        return accumulated_accuracy
+
+class Accuracy_Categorical(Accuracy):
+
+    def compare(self, batch_outputs: np.ndarray, batch_targets: np.ndarray):
         predictions = np.argmax(batch_outputs, axis=1)
         if len(batch_targets.shape) == 2:
             batch_targets = np.argmax(batch_targets, axis=1)
-        accuracy = np.mean(predictions == batch_targets)
-        return accuracy
+        return predictions == batch_targets
