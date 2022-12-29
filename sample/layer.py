@@ -15,18 +15,20 @@ class Layer:
         self.dweights = np.zeros(weights.shape)
         self.dbias = np.zeros(biases.shape)
 
+    def __str__(self):
+        return f"Layer_{Layer.id}"
+
     #@logger.log_function()
-    def execute(self, inputs: np.ndarray, activation_func: model.Activation) -> np.ndarray:
+    def execute(self, inputs: np.ndarray, activation_function: Callable) -> np.ndarray:
         """
         forward pass through the network
         """
         # TODO: fuckar nätverket. fixa. nice!
-        raise Exception("HÄR ÄR ETT FEL. DET MÅSTE FIXAS. EFTER FÖRSTA GÅNGEN DEN KÖRS RETURNAS BARA ETTOR, AKTIVERINGSFUNTIONEN GÖR SÅ ALLA TAL BLIR ETT REEEEE REEEE RAHHH")
         self.inputs = inputs
         output = np.dot(inputs, self.weights) + self.bias # Fig. 2
-        
+        # TODO DE ÄR FEL STORLEK TYP FIXA!
         with np.nditer(output, op_flags=["readwrite"]) as it: # Iterate and modify all elements
-            for value in it: value[...] = activation_func(value)
+            for value in it: value[...] = activation_function(value)
         return output
 
     def back(self, dvalues: np.ndarray, learn_rate: float) -> np.ndarray:
@@ -38,8 +40,8 @@ class Layer:
         return np.dot(dvalues, self.weights.T)
 
     def apply_trainings(self) -> None:
-        self.weights = self.dweights
-        self.bias = self.dbias
+        self.weights += self.dweights
+        self.bias += self.dbias
 
 if __name__ == "__main__":
     print("Du kör fel fil din dummer! :(")
