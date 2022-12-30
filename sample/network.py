@@ -1,106 +1,64 @@
 import numpy as np
-import enum, itertools
-from typing import Generator, Iterable
-from functions import Accuracy
-import layer, model, data, logger, utils
+import itertools
 
-class Mode(enum.Enum):
-    debug = enum.auto()
-    train = enum.auto()
-    normal = enum.auto()
+import model, layer, utils, data
 
 class Network:
-    def __init__(self, model: model.Model, mode=Mode.normal):
+    def __init__(self, model: model.Model):
         self.model = model
-        self.__load_layers()
-        self.mode = mode
-
-    def __load_layers(self):
-        """
-        Loads layers via model
-        If model has .wnb file, it is loaded
-        If not it creates random weights and biases between -1, 1
-        """
 
         if self.model.has_wnb:
+            # Load weights and biases from .wnb file
             weights, biases = self.model.load_wnb()
         else:
-            weights = list(map(lambda x: np.random.uniform(low=-1, high=1, size=x),
-                utils.pairwise(self.model.structure)))
-            biases = list(map(lambda x: np.random.uniform(low=-1, high=1, size=x),
-                self.model.structure[1:]))
+            # Initialize weights and biases
+            weights = list(map(self.init_weights,
+                utils.pairwise(self.model.structure["nodes"])))
+            biases = list(map(self.init_biases, 
+                self.model.structure["nodes"][1:]))
 
-        self.layers = list(itertools.starmap(layer.Layer, zip(weights, biases)))
+        # Create layers
+        self.layers = [layer.Layer(w, b, a()) for w, b, a in 
+            zip(weights, biases, self.model.structure["activations"])]
 
-    def save_wnb(self):
-        w, b = zip(*[(i.weights, i.bias) for i in self.layers])
-        self.model.save_wnb(w, b)
+    def init_weights(self, size):
+        # TODO: fancy init function
+        return np.random.uniform(low=0, high=1, size=size)
 
-    def execute(self, inputs: np.ndarray) -> np.ndarray:
+    def init_biases(self, size):
+        return np.zeros(shape=size)
+
+    def forward(self, samples):
+        output = self.layers[0].forward(samples)
+
+        for layer in self.layers[1:]:
+            output = layer.forward(output)
+    
+        return output
+
+    def backward(self, samples, labels):
+        loss_gradients = self.model.loss_function.backward(samples, labels)
+        gradients = self.layers[-1].backward(loss_gradients, temp_cce=True)
+        for layer in reversed(self.layers[:-1]):
+            gradients = layer.backward(gradients, temp_cce=False)
+
+        # self.model.optimizer.apply_decay()
         for layer in self.layers:
-            inputs = layer.execute(inputs, self.model.activation_function.f)
-
-        # Normalization using Soft-Max function
-        exp_out = np.exp(inputs)
-        layer_sum = np.sum(exp_out)
-        confidence_scores = exp_out / layer_sum # skapar ett error om man har ReLU som aktiveringsfunktionen
-        return confidence_scores
-
-    def run_batch(self, data: Iterable) -> tuple:
-        samples, labels = map(np.asarray, zip(*data))
-        return self.execute(samples), labels
-
-    def back_propagate(self, batch_outputs: np.ndarray, batch_targets: np.ndarray):
-        # Loss backpropagation
-        bp_value = self.model.loss_function.backward(batch_outputs, batch_targets)
-        # backwardpass through the layers
-        for layer in reversed(self.layers):
-            # Iterate and modify all elements
-            with np.nditer(bp_value, op_flags=["readwrite"]) as it:
-                # f'(x) * x for every element in matrix
-                for v in it: v[...] = self.model.activation_function.df(v) * v
-            bp_value = layer.back(bp_value, self.model.learn_rate)
-        # applies dweights and dbiases
+            self.model.optimizer.apply_training(layer)
+    
+    def train(self, data_points):
+        samples, labels = map(np.asarray, zip(*data_points))
+        guesses = self.forward(samples)
         
-        for layer in self.layers:
-            layer.apply_trainings()
-        
-        # TODO ADD OPTIMIZERS SUCH AS ADAM (BAD) AND ADAGRAD
+        loss = self.model.loss_function.calculate(guesses, labels)
+        accuracy = self.model.accuracy_function.calculate(guesses, labels)
 
-    def train(self, data: Iterable):
-        batch_outputs, batch_targets = self.run_batch(data)
+        self.backward(guesses, labels)
 
-        # TODO ADD DATA_LOSS AND L1 + L2 REGULARIZATION LOSS
-        loss = self.model.loss_function.calculate(batch_outputs, batch_targets)
-        accuracy = self.model.accuracy_function.calculate(batch_outputs, batch_targets)
-
-        self.back_propagate(batch_outputs, batch_targets)
-
-        NOT_IMPLEMENTED = 0
-
-        return accuracy, loss, NOT_IMPLEMENTED, NOT_IMPLEMENTED, NOT_IMPLEMENTED
-
-    def _debug_get_weights(self):
-        return np.array([layer.weights for layer in self.layers], dtype=object)
+        return loss, accuracy
 
 if __name__ == "__main__":
-    model = model.Model("test_model")
-    network = Network(model)
-    dataset = data.CompiledDataset(
-        "emnist-letters.mat", 
-        validation_partition=True, 
-        as_array=True, 
-        flatten=True, 
-        normalize=True
-    )
-    
-    start_weights = network._debug_get_weights()
-    # -------- training -----------
-    for _ in range(10):
-        network.train(dataset.next_batch(10))
-        ree = network._debug_get_weights()
-        print("DIFF", ree - start_weights, "\nWIEGHTG", ree)
-        start_weights = ree
+    print("fel fel fel feil")
 
-    logger.print_post()
-    # network.save_wnb()
+
+
