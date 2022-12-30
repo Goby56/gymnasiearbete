@@ -74,7 +74,9 @@ class CompiledDataset:
 
     def next_batch(self, batch_size: int):
         for _ in range(batch_size):
-            yield next(self.training_data)
+            sample = next(self.training_data, None)
+            if sample != None:
+                yield sample
             
 
 

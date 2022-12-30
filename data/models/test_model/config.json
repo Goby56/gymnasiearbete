@@ -12,7 +12,7 @@
         "optimizer": "",
         "optimizer_decay": "",
         "dataset": "emnist-letters.mat",
-        "batch_size": 128,
+        "batch_size": 52,
         "epochs": 1,
         "learn_rate": 0.03
     }
