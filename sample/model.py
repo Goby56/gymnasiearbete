@@ -13,10 +13,10 @@ class MissingConfigAttribute(Exception):
 
 class Model(dict):
 
-    function_table = {
-        "activation_function": "Activation_",
+    function_bindings = {
         "loss_function": "Loss_",
-        "accuracy_function": "Accuracy_"
+        "accuracy_function": "Accuracy_",
+        "optimizer": "Optimizer_"
     }
 
     def __init__(self, name: str):
@@ -41,17 +41,28 @@ class Model(dict):
 
         super().__init__(setup | training)
 
-        self.shape = self.structure[0], self.structure[-1]
-
-        # init funtion instances
         def get(var):
             function = getattr(functions, var, None)
             if function is None:
                 raise Exception(f'function "{function}" does not exist!')
-            return function()
-        
-        for func in Model.function_table:
-            self[func] = get(Model.function_table[func] + self[func])
+            return function
+
+        # init setup hyperparams
+        for i, func in enumerate(self.structure["activations"].copy()):
+            self.structure["activations"][i] = get("Activation_" + func)
+
+        # init training hyperparams
+        for func in Model.function_bindings:
+            if func == "optimizer":
+                binding = Model.function_bindings[func] + self[func]["function"]
+                optimizer = get(binding)
+                args = map(lambda attr: self[attr], self[func]["args"])
+                self[func] = optimizer(*args)
+            else:
+                self[func] = get(Model.function_bindings[func] + self[func])()
+
+        in_, *_, out_ = self.structure["nodes"]
+        self.shape = (in_, out_)
 
     def __getattr__(self, attr):
         return self[attr]
@@ -81,4 +92,7 @@ class Model(dict):
 
 
 if __name__ == "__main__":
+    import numpy as np
     model = Model("test_model")
+    r = model.structure["activations"][0]().forward(np.array([10, -1, 6, 2, 1]))
+    print(r)
