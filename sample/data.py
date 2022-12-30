@@ -2,6 +2,7 @@ import os
 from scipy.io import loadmat
 import numpy as np
 from typing import Union
+from PIL import Image
 
 class CompiledDataset:
     """
@@ -53,6 +54,18 @@ class CompiledDataset:
         else:
             self.shape = (None, None)
 
+    def represent(self, array, label):
+        image = (array.reshape(28,28) + 1) * 127.5 if self.__normalize else array.reshape(28,28)
+        if label is None:
+            return image if self.__flatten else array
+        _ascii = self.__data["mapping"][label.tolist().index(1)][1]
+        return (image if self.__flatten else array,
+                chr(_ascii) if self.__as_array else label)
+
+    def show(self, array, label):
+        Image.fromarray(array).show()
+        print(label)
+
     def __label_type(self, label: str) -> Union[str, np.ndarray]:
         index = label-self.__data["mapping"][0][0]
         if not self.__as_array: return chr(self.__data["mapping"][index][1])
@@ -68,7 +81,7 @@ class CompiledDataset:
 
             # argument clauses
             image = image.flatten() if self.__flatten else image
-            image = image / 127.5 - 1 if self.__normalize else image
+            image = image / 255 if self.__normalize else image
             
             yield (image, self.__label_type(label))
 
