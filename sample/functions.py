@@ -4,47 +4,55 @@ from typing import Callable
 import math
 import numpy as np
 
-# class Activation(Enum):
-#     ReLU = (lambda x: max(0, x), lambda x: x > 0)
-#     Sigmoid = (lambda x: 1 / (1 + np.exp(-_K1*x)),
-#                lambda x: (_K1*np.exp(-_K1*x))/np.power((np.exp(-_K1*x)+1), 2))
-#     Step = (lambda x: x > 0, lambda x: 0)
+# region Activation
 
+class Activation_Softmax:
+    """
+    Softmax funtion is always applied as the last activation function in a network
+    The derivitive is included in Loss_CCE backward calculation
+    """
+    def forward(self, X):
+        """
+        takes an array as argument
+        """
+        exp_out = np.exp(X)
+        layer_sum = np.sum(exp_out)
+        confidence_scores = exp_out / layer_sum # skapar ett error om man har ReLU som aktiveringsfunktionen
+        return confidence_scores
 
-#     def __init__(self, func: Callable, derivative: Callable):
-#         self.__f = func
-#         self.__df = derivative
-
-#     def f(self, __x: float) -> float:
-#         return float(self.__f(__x))
-
-#     def df(self, __x: float) -> float:
-#         return float(self.__df(__x))
-
-#     def __call__(self, __x: float) -> float:
-#         return self.f(__x)
-
-#     def __str__(self):
-#         return self._name_
+    def backward(self, x):
+        raise NotImplementedError
 
 class Activation_ReLU:
-    def f(self, x):
-        return max(0, x)
+    def forward(self, inputs):
+        self.inputs = inputs
+        return np.maximum(0, inputs)
 
-    def df(self, x):
-        return x > 0
+    def backward(self, dvalues):
+        inputs = dvalues.copy()
+        inputs[self.inputs <= 0] = 0
+        return inputs
+
+class Activation_ReLU6:
+    def forward(self, inputs):
+        self.inputs = inputs
+        return np.maximum(0, np.minimum(inputs, 6))
+
+    def backward(self, dvalues):
+        inputs = dvalues.copy()
+        inputs[np.logical_and(6 <= self.inputs, self.inputs >= 0)] = 0
+        return inputs
 
 
 class Activation_Sigmoid:
+    # TODO: prob. fix 
 
-    __k = 1
+    def forward(self, X):
+        self.inputs = X
+        return 1 / (1 + np.exp(-self.inputs))
 
-    def f(self, x):
-        return 1 / (1 + np.exp(-self.__k*x))
-
-    def df(self, x):
-        y = self.__k*x
-        return self.__k*np.exp(-y)/np.power(np.exp(-y)+1, 2)
+    def backward(self, X):
+        return self.inputs * self.forward(X) * (1- self.forward(X))
 
 class Activation_Step:
     def f(self, x):
@@ -53,6 +61,7 @@ class Activation_Step:
     def df(self, x):
         return 0
 
+# endregion Activation
 
 # region Loss
 
@@ -66,6 +75,8 @@ class Loss:
     
     def calculate(self, batch_outputs: np.ndarray, batch_targets: np.ndarray):
         batch_loss = self.forward(batch_outputs, batch_targets)
+        # print(batch_loss)
+        # print(np.mean(batch_loss))
         self.accumulated_sum += np.sum(batch_loss)
         self.accumulated_count += len(batch_loss)
         return np.mean(batch_loss)
@@ -95,6 +106,8 @@ class Loss_CCE(Loss):
 
 # endregion Loss
 
+# region Accuracy
+
 class Accuracy:
     def __init__(self):
         self.reset_accumulation()
@@ -122,3 +135,28 @@ class Accuracy_Categorical(Accuracy):
         if len(batch_targets.shape) == 2:
             batch_targets = np.argmax(batch_targets, axis=1)
         return predictions == batch_targets
+
+# endregion Accuracy
+
+# region Optimizer
+
+class Optimizer_SGD:
+    """
+    Stochastic gradient decent - the most simple optimizer algorithm
+    """
+    def __init__(self, learn_rate, decay):
+        self.learn_rate = learn_rate
+        self.current_learn_rate = learn_rate
+        self.decay = decay
+        self.iterations = 0
+
+    def apply_decay(self):
+        if self.decay > 0:
+            self.current_learn_rate = self.learn_rate * (1 / (1 + self.decay * self.iterations))
+        self.iterations += 1
+
+    def apply_training(self, layer):
+        layer.weights -= self.learn_rate * layer.dweights
+        layer.biases -= self.learn_rate * layer.dbiases
+
+# endregion Optimizer
