@@ -1,14 +1,15 @@
-import data, os
-from network import Network, Mode
+import data, os, sys
+import numpy as np
+from network import Network
 from model import Model
 
-def __train():
+def train():
     model = Model("test_model")
-    network = Network(model, mode=Mode.train)
+    network = Network(model)
     dataset = data.CompiledDataset(
         filename=model.dataset, 
         validation_partition=True, 
-        as_array=True, 
+        as_array=True,
         flatten=True, 
         normalize=True
     )
@@ -23,22 +24,25 @@ def __train():
     for epoch in range(1, model.epochs+1):
         for step in range(training_steps):
             summary_data = network.train(dataset.next_batch(model.batch_size))
+            if step == 1:
+                print(network.layers[0].dweights)
+                quit()
             if step % show_summary_every == 0:
                 summary = "\n".join([
                     f"epoch: {epoch}",
                     f"step: {step}",
-                    f"accuracy: {summary_data[0]:.3f}",
-                    f"loss: {summary_data[1]:.3f}",
-                    f"data loss: {summary_data[2]:.3f}",
-                    f"regularization loss: {summary_data[3]:.3f}",
-                    f"learn rate: {summary_data[4]:.6f}"
+                    f"accuracy: {summary_data[1]:.3f}",
+                    f"loss: {summary_data[0]:.3f}",
+                    # f"data loss: {summary_data[2]:.3f}",
+                    # f"regularization loss: {summary_data[3]:.3f}",
+                    # f"learn rate: {summary_data[4]:.6f}"
                 ])
-                if network.mode == Mode.train:
-                    os.system("cls||clear")
-                    print(summary)
+                os.system("cls||clear")
+                print(summary)
 
 if __name__ == "__main__":
-    __train()
+    np.set_printoptions(threshold=sys.maxsize)
+    train()
 
 
 
