@@ -1,8 +1,8 @@
 {
     "setup": {
         "structure": {
-            "nodes": [784, 64, 64, 26],
-            "activations": ["ReLU6", "ReLU6", "Softmax"]
+            "nodes": [784, 128, 128, 26],
+            "activations": ["ReLU", "ReLU", "Softmax"]
         }
     },
 
@@ -15,8 +15,8 @@
         },
         "optimizer_decay": 0.001,
         "dataset": "emnist-letters.mat",
-        "batch_size": 52,
-        "epochs": 1,
+        "batch_size": 128,
+        "epochs": 10,
         "learn_rate": 1.0
     }
 }

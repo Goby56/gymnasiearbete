@@ -81,7 +81,9 @@ class CompiledDataset:
 
             # argument clauses
             image = image.flatten() if self.__flatten else image
-            image = image / 255 if self.__normalize else image
+            # image = image / 127.5 - 1 if self.__normalize else image # -1 to 1
+            # image = image / 255 if self.__normalize else image # 0 to 1
+            image = (image - np.mean(image)) / np.std(image) if self.__normalize else image # mean 0, std 1
             
             yield (image, self.__label_type(label))
 
@@ -91,8 +93,7 @@ class CompiledDataset:
             if sample != None:
                 yield sample
             
-
-
+            
 if __name__ == "__main__":
     dataset = CompiledDataset("emnist-letters.mat", validation_partition=True, as_array=True)
     for data in dataset.next_batch(1):

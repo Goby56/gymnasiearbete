@@ -22,18 +22,16 @@ class Network:
             zip(weights, biases, self.model.structure["activations"])]
 
     def init_weights(self, size):
-        # TODO: fancy init function
-        return np.random.uniform(low=0, high=1, size=size)
+        return 0.01 * np.random.randn(*size)
 
     def init_biases(self, size):
         return np.zeros(shape=size)
 
-    def forward(self, samples):
+    def forward(self, samples: np.ndarray):
         output = self.layers[0].forward(samples)
-
         for layer in self.layers[1:]:
             output = layer.forward(output)
-    
+        
         return output
 
     def backward(self, samples, labels):
@@ -42,7 +40,7 @@ class Network:
         for layer in reversed(self.layers[:-1]):
             gradients = layer.backward(gradients, temp_cce=False)
 
-        # self.model.optimizer.apply_decay()
+        self.model.optimizer.apply_decay()
         for layer in self.layers:
             self.model.optimizer.apply_training(layer)
     

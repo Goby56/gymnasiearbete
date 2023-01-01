@@ -16,7 +16,7 @@ def train():
 
     assert dataset.shape == model.shape
 
-    show_summary_every = 3 # steps
+    show_summary_every = 20 # steps
 
     training_steps = (dataset.training_len // model.batch_size) + (dataset.training_len % model.batch_size != 0)
     validation_steps = (dataset.validation_len // model.batch_size) + (dataset.validation_len % model.batch_size != 0)
@@ -24,9 +24,6 @@ def train():
     for epoch in range(1, model.epochs+1):
         for step in range(training_steps):
             summary_data = network.train(dataset.next_batch(model.batch_size))
-            if step == 1:
-                print(network.layers[0].dweights)
-                quit()
             if step % show_summary_every == 0:
                 summary = "\n".join([
                     f"epoch: {epoch}",
@@ -41,7 +38,6 @@ def train():
                 print(summary)
 
 if __name__ == "__main__":
-    np.set_printoptions(threshold=sys.maxsize)
     train()
 
 

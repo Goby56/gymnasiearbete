@@ -12,6 +12,7 @@ class Layer:
         return self.activation.forward(output)
 
     def backward(self, gradients, *, temp_cce):
+        # TODO fix independet activation and loss function derivative
         if not temp_cce:
             dvalues = self.activation.backward(gradients)
         else:
