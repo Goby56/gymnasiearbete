@@ -11,14 +11,15 @@ class Activation_Softmax:
     Softmax funtion is always applied as the last activation function in a network
     The derivitive is included in Loss_CCE backward calculation
     """
-    def forward(self, X):
+    def forward(self, inputs):
         """
         takes an array as argument
         """
-        exp_out = np.exp(X)
-        layer_sum = np.sum(exp_out)
-        confidence_scores = exp_out / layer_sum # skapar ett error om man har ReLU som aktiveringsfunktionen
-        return confidence_scores
+        exp_values = np.exp(inputs - np.max(inputs, axis=1,
+                                            keepdims=True))
+        probabilities = exp_values / np.sum(exp_values, axis=1,
+                                            keepdims=True)
+        return probabilities
 
     def backward(self, x):
         raise NotImplementedError
