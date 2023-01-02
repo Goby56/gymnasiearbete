@@ -1,6 +1,7 @@
 import os, json
-from model_file_formatter import file_reader, str_writer
-import functions
+
+from . import functions
+from .model_file_formatter import file_reader, str_writer
 
 _MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 

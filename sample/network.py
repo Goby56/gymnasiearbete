@@ -1,8 +1,9 @@
 import numpy as np
 import itertools
 
-import model, layer, utils, data
+from . import model, layer, utils, data
 
+# TODO: Move standardization from dataset to network. option has been added to config.
 class Network:
     def __init__(self, model: model.Model):
         self.model = model
@@ -54,6 +55,10 @@ class Network:
         self.backward(guesses, labels)
 
         return loss, accuracy
+
+    def save(self):
+        w, b = zip(*[(i.weights, i.biases) for i in self.layers])
+        self.model.save_wnb(w, b)
 
 if __name__ == "__main__":
     print("fel fel fel feil")
