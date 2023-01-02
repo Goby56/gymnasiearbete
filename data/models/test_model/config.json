@@ -3,7 +3,8 @@
         "structure": {
             "nodes": [784, 128, 128, 26],
             "activations": ["ReLU", "ReLU", "Softmax"]
-        }
+        },
+        "normalize_input": false
     },
 
     "training": {
@@ -17,6 +18,6 @@
         "dataset": "emnist-letters.mat",
         "batch_size": 128,
         "epochs": 10,
-        "learn_rate": 1.0
+        "learn_rate": 0.3
     }
 }
