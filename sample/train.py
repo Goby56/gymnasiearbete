@@ -1,29 +1,30 @@
-import data, os, sys
+import os, sys
 import numpy as np
-from network import Network
-from model import Model
+from .network import Network
+from .model import Model
+from . import data
 
 def train():
     model = Model("test_model")
     network = Network(model)
     dataset = data.CompiledDataset(
-        filename=model.dataset, 
-        validation_partition=True, 
-        as_array=True,
-        flatten=True, 
-        normalize=True
+        filename=model.dataset,
+        standardize=False
     )
-
     assert dataset.shape == model.shape
 
-    show_summary_every = 20 # steps
+    show_summary_every = 100 # steps
 
     training_steps = (dataset.training_len // model.batch_size) + (dataset.training_len % model.batch_size != 0)
     validation_steps = (dataset.validation_len // model.batch_size) + (dataset.validation_len % model.batch_size != 0)
 
     for epoch in range(1, model.epochs+1):
+        dataset.generate_training_data()
         for step in range(training_steps):
-            summary_data = network.train(dataset.next_batch(model.batch_size))
+            batch = dataset.next_batch(model.batch_size)
+            if batch == None:
+                break
+            summary_data = network.train(batch)
             if step % show_summary_every == 0:
                 summary = "\n".join([
                     f"epoch: {epoch}",
@@ -36,6 +37,7 @@ def train():
                 ])
                 os.system("cls||clear")
                 print(summary)
+    network.save()
 
 if __name__ == "__main__":
     train()
