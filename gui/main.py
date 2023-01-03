@@ -8,8 +8,7 @@ class Application(tk.Frame):
 
         self.pages = {
             "main": pages.PageMain(self),
-            "train": pages.PageTrain(self),
-            "new_model": pages.PageNewModel(self)
+            "train": pages.PageTrain(self)
         }
         self.current_page = self.pages["main"]
         self.current_page.pack()
