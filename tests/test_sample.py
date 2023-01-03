@@ -1,5 +1,7 @@
-import sys, numpy as np
+import numpy as np
 
+import os, sys
+sys.path.append(os.getcwd())
 import sample
 
 model = sample.Model("test_model")

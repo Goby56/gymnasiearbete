@@ -1,6 +1,10 @@
-import sample
 from PIL import Image
 import numpy as np
+
+import os, sys
+sys.path.append(os.getcwd())
+import sample
+
 
 
 dataset = sample.CompiledDataset(
