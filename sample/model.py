@@ -1,7 +1,11 @@
 import os, json
 
-from . import functions
-from .model_file_formatter import file_reader, str_writer
+try:
+    from . import functions
+    from .model_file_formatter import file_reader, str_writer
+except ImportError:
+    import functions
+    from model_file_formatter import file_reader, str_writer
 
 _MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 

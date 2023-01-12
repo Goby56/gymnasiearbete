@@ -1,15 +1,24 @@
 import os, sys
 import numpy as np
-from .network import Network
-from .model import Model
-from . import data
+
+try:
+    from .network import Network
+    from .model import Model
+    from .data import CompiledDataset
+except ImportError:
+    from network import Network
+    from model import Model
+    from data_old import CompiledDataset
 
 def train():
-    model = Model("test_model")
+    model = Model("test_new_data")
     network = Network(model)
-    dataset = data.CompiledDataset(
+    dataset = CompiledDataset(
         filename=model.dataset,
-        standardize=False
+        validation_partition=True, 
+        as_array=True, 
+        flatten=True,
+        normalize=True
     )
     assert dataset.shape == model.shape
 
@@ -19,7 +28,7 @@ def train():
     validation_steps = (dataset.validation_len // model.batch_size) + (dataset.validation_len % model.batch_size != 0)
 
     for epoch in range(1, model.epochs+1):
-        dataset.generate_training_data()
+        #dataset.generate_training_data()
         for step in range(training_steps):
             batch = dataset.next_batch(model.batch_size)
             if batch == None:

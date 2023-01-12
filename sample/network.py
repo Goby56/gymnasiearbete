@@ -1,7 +1,10 @@
 import numpy as np
 import itertools
 
-from . import model, layer, utils, data
+try:
+    from . import model, layer, utils, data
+except ImportError:
+    import model, layer, utils, data
 
 # TODO: Move standardization from dataset to network. option has been added to config.
 class Network:
