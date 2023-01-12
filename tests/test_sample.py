@@ -11,10 +11,10 @@ dataset = sample.CompiledDataset(
     validation_partition=True, 
     as_array=True,
     flatten=True,
-    standardize=True
+    normalize=True
 )
 
-for _ in dataset.next_batch(100):
+for _ in dataset.next_batch(1234):
     pass
 
 image, correct_guess = next(dataset.next_batch(1))
