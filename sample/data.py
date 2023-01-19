@@ -23,8 +23,9 @@ class CompiledDataset:
 
     def __init__(self, *,
         filename: str,
-        validation_partition = True, 
-        standardize = False
+        image_size: tuple[int, int],
+        validation_partition = True,
+        standardize = True
     ):
         filepath = os.path.join(self.__data_dir, "EMNIST", filename)
 
@@ -32,44 +33,103 @@ class CompiledDataset:
             raise Exception("Dataset not found! Download the EMNIST dataset from Google Drive")
 
         self.__data = loadmat(filepath, simplify_cells = True)["dataset"]
+
+        self.image_size = image_size
+        self.validation_partition = validation_partition
         self.is_standardized = standardize
-        
+
         mapping = self.__data["mapping"][:, 1].flatten()
         self.labels = np.vectorize(chr)(mapping)
-        
 
-        img = self.__data["train"]["images"][0]
-        lbl = self.__data["train"]["labels"][0]
-        self.in_out_dim = (img.size, lbl.size)
-        self.data_dim = (28, 28)
+        self.__load_generators()
+        self.shape = tuple(map(len, next(self.next_batch(1))))
 
-        self.training_len = len(self.__data["train"]["labels"])
-        self.partition_len = len(self.__data["test"]["labels"])
-        self.use_validation_partition = validation_partition
-        
-        self.generate_training_data()
+    #region private shit
+    def __load_generators(self):
+        training_len = len(self.__data["train"]["labels"])
+        partition_len = len(self.__data["test"]["labels"])
+
+        self.__new_training_data = lambda: self.__sample_gen(
+            "train", slice(0, training_len - partition_len*self.validation_partition)
+        )
+        self.__new_validation_data = lambda: self.__sample_gen(
+            "train", slice(training_len - partition_len*self.validation_partition, training_len)
+        )
+        self.__new_test_data = lambda: self.__sample_gen("test", slice(0, partition_len))
+
+        self.training_data = self.__new_training_data()
+        self.validation_data = self.__new_validation_data()
+
+        self.training_len = training_len - partition_len*self.validation_partition
+        self.validation_len = partition_len*self.validation_partition
+
+    def __sample_gen(self, target: str, interval: slice):
+        assert target in ["train", "test"], "arg. target not of type 'train', 'test' or 'validation'"
+        targeted_data = self.__data[target]
+        for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
+            image = np.flip(np.rot90(np.reshape(image, self.image_size), -1), -1).flatten()
+
+            if self.is_standardized:
+                image = self.__standardize_image(image)
+
+            label = self.__to_hot_vector(label)
+
+            yield (image, label)
+
+    def __standardize_image(self, image):
+        return (image - np.mean(image)) / np.std(image)
+
+    def __to_hot_vector(self, index_int: int) -> Union[str, np.ndarray]:
+        out = np.zeros(len(self.labels))
+        out[index_int-1] = 1
+        return out
+    #endregion private shit
+
+    def next_batch(self, batch_size: int):
+        for _ in range(batch_size):
+            sample = next(self.training_data, None)
+            if sample is None:
+                self.training_data = self.__new_training_data()
+                next(self.training_data)
+                break
+            yield sample
+
+    def get_test_data(self):
+        return self.__new_test_data()
 
     def convert_image(self, flat_array: np.ndarray) -> np.ndarray:
-        new_array = flat_array.reshape(self.data_dim)
+        """
+        un-standardizes values if standardize=True
+        Arguments:
+            flat_array: np.ndarray --- a flat np.ndarray with length image_size[0]*image_size[1]
+        Returns:
+            np.ndarray --- a np.ndarray with shape image_size
+        """
+        new_array = flat_array.reshape(self.image_size)
         if self.is_standardized:
             # Remap values to 0 - 255
             new_array = np.interp(new_array, (new_array.min(), new_array.max()), (0, 255)) 
         return new_array
 
     def convert_label(self, hot_vector: np.ndarray) -> str:
+        """
+        Arguments:
+            hot_vector: np.ndarray --- a one-hot vector of type np.ndarray
+        Returns:
+            str --- the character that the one-hot vector represents acording to dataset mapping
+        """
         return self.labels[np.where(hot_vector==1)[0]][0]
 
-    def generate_training_data(self):
-        training_interval = slice(0, self.training_len - self.partition_len * self.use_validation_partition)
-        validation_interval = slice(self.training_len - self.partition_len * self.use_validation_partition, self.training_len)
-        self.training_data = self.__sample_generator("train", training_interval)
-        self.validation_data = self.__sample_generator("train", validation_interval)
-
-    def get_test_data(self):
-        return self.__sample_generator("test", slice(0, self.partition_len))
-
-    def get(self, amount: int, convert=False):
-
+    def get(self, amount: int, convert: bool=False) -> tuple[np.ndarray, Union[str, np.ndarray]]:
+        """
+        OBS! This function exasuts the training data generator
+        Arguments:
+            amount: int --- the amount of data-points to be retrived
+            convert: bool = False --- if the data-point(s) should be converted into thier readable formats
+        Returns:
+            tuple[np.ndarray, Union[str, np.ndarray]] --- returns a tuple with the image and the label, 
+                                                          if converted the label is a string else a np.ndarray
+        """
         def conv(data):
             images, labels = zip(*data)
             images = map(self.convert_image, images)
@@ -80,37 +140,3 @@ class CompiledDataset:
         if amount > 1:
             return conv(data) if convert else data
         return conv(data)[0] if convert else data
-
-    def next_batch(self, batch_size: int):
-        for _ in range(batch_size):
-            sample = next(self.training_data, None)
-            if sample is None:
-                break
-            yield sample
-
-    def __to_hot_vector(self, index_int: int) -> Union[str, np.ndarray]:
-        out = np.zeros(len(self.labels))
-        out[index_int-1] = 1
-        return out
-
-    def __sample_generator(self, target: str, interval: slice):
-        assert target in ["train", "test"], "arg. target not of type 'train' or 'test'"
-        targeted_data = self.__data[target]
-        for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
-            image = np.flip(np.rot90(np.reshape(image, self.data_dim), -1), -1).flatten()
-
-            if self.is_standardized:
-                image = self.__standardized_image(image)
-            
-            label = self.__to_hot_vector(label)
-
-            yield (image, label)
-
-    def __standardized_image(self, image):
-        return (image - np.mean(image)) / np.std(image)
-     
-
-if __name__ == "__main__":
-    dataset = CompiledDataset(filename="emnist-letters.mat", validation_partition=True)
-    for data in dataset.next_batch(1):
-        print(data)
