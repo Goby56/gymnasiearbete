@@ -1,2 +1,4 @@
 data/EMNIST
 sample/__pycache__
+analysis/__pycache__
+tests/__pycache__
