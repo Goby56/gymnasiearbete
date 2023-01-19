@@ -1,8 +1,7 @@
-
 {
     "setup": {
         "structure": {
-            "nodes": [784, 64, 64, 26],
+            "nodes": [784, 128, 128, 26],
             "activations": ["ReLU", "ReLU", "Softmax"]
         },
         "normalize_input": false
@@ -13,14 +12,12 @@
         "loss_function": "CCE",
         "optimizer": {
             "function": "SGD",
-             "args": ["learn_rate", "optimizer_decay"]
+            "args": ["learn_rate", "optimizer_decay"]
         },
         "optimizer_decay": 0.001,
         "dataset": "emnist-letters.mat",
         "batch_size": 128,
-        "epochs": 10,
+        "epochs": 1,
         "learn_rate": 0.3
     }
 }
-
-
