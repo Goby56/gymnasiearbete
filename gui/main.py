@@ -39,6 +39,7 @@ class Canvas(tk.Frame):
         
     def clear(self, e):
         self.canvas.delete("all")
+        #PIL
         self.draw.rectangle((0, 0, self.size, self.size), fill="black")
 
     def callback(self, e):
@@ -57,6 +58,7 @@ class Canvas(tk.Frame):
     def paint(self, e):
         x, y = e.x, e.y
         self.canvas.create_line((self.lastx, self.lasty, x, y), width=self.brush_size, fill="white")
+        #PIL
         self.draw.line((self.lastx, self.lasty, x, y), width=int(self.brush_size), fill="white")
         self.lastx, self.lasty = x, y
 
@@ -64,27 +66,34 @@ class Application(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("AI Playground")
+        self.resizable(False, False)
         self.canvas = Canvas(self, self.callback)
+
         right_panel = tk.Frame(self, background="black")
         self.model_selector = ttk.Combobox(right_panel)
+        self.model_selector.bind("<<ComboboxSelected>>", self.on_select)
         self.guesses = tk.Listbox(right_panel)
+
         self.model_selector.pack(fill="x")
         self.guesses.pack(fill="both", expand=True)
 
         self.canvas.grid(row=0, column=0)
         right_panel.grid(row=0, column=1, sticky="news")
-        # TODO: MOdel selector
-
+        
         self.models = {}
         self.load_models()
-    
+        self.last_callback = None
+
     @property
     def current_model(self):
         return self.model_selector.get()
 
+    def on_select(self, e):
+        if not self.last_callback is None:
+            self.callback(self.last_callback)
+    
     def load_models(self):
         models = os.listdir(PATH_MODELS)
-        print(models)
         for model_name in models:
             model = sample.Model(model_name)
             self.models[model_name] = (sample.Network(model), model)
@@ -92,6 +101,7 @@ class Application(tk.Tk):
         self.model_selector.current(0)
 
     def callback(self, array):
+        self.last_callback = array
         input_vector = np.c_[array.flatten()/255].T
         output_vector = self.models[self.current_model][0].forward(input_vector).flatten()
         labels = self.models[self.current_model][1].mapping
