@@ -57,9 +57,9 @@ class Canvas(tk.Frame):
 
     def paint(self, e):
         x, y = e.x, e.y
-        self.canvas.create_line((self.lastx, self.lasty, x, y), width=self.brush_size, fill="white")
+        self.canvas.create_line((self.lastx, self.lasty, x, y), width=self.brush_size, fill="white", capstyle=tk.ROUND, smooth=True)
         #PIL
-        self.draw.line((self.lastx, self.lasty, x, y), width=int(self.brush_size), fill="white")
+        self.draw.line((self.lastx, self.lasty, x, y), width=int(self.brush_size), fill="white", joint="curve")
         self.lastx, self.lasty = x, y
 
 class Application(tk.Tk):
