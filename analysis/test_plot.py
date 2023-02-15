@@ -11,10 +11,10 @@ def main():
     
     plots.accuracy_over_time(model.training_stats[:,0], model.training_stats[:,1], 
                              model.training_stats[:,3], color="blue")
-    plots.plt_save(model.out_path, f"{plots.accuracy_over_time.__name__}.png")
+    plots.plt_save(model.out_path, f"{plots.accuracy_over_time.__name__}_shit.png")
     plots.loss_over_time(model.training_stats[:,0], model.training_stats[:,1], 
                              model.training_stats[:,2], color="red")
-    plots.plt_save(model.out_path, f"{plots.loss_over_time.__name__}.png")
+    plots.plt_save(model.out_path, f"{plots.loss_over_time.__name__}_shit.png")
 
 
 if __name__ == "__main__":
