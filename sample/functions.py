@@ -145,7 +145,7 @@ class Optimizer_SGD:
     """
     Stochastic gradient decent - the most simple optimizer algorithm
     """
-    def __init__(self, learn_rate, decay):
+    def __init__(self, *, learn_rate, decay): # ALLA OPTIMZIERS MÅSTE HA "*"" EFTER SELF EFTERSOM DET MÅSTE VARA KWARGS. VÄNLIGET KONTAKTA CASPER FÖR MER INFORMATION OM VARFÖR DETTA ÄR. MVH. MR. BENÉ
         self.learn_rate = learn_rate
         self.current_learn_rate = learn_rate
         self.decay = decay

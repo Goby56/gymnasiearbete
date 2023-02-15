@@ -61,8 +61,7 @@ class Model(dict):
             if func == "optimizer":
                 binding = Model.function_bindings[func] + self[func]["function"]
                 optimizer = get(binding)
-                args = map(lambda attr: self[attr], self[func]["args"])
-                self[func] = optimizer(*args)
+                self[func] = optimizer(**self[func]["args"])
             else:
                 self[func] = get(Model.function_bindings[func] + self[func])()
 

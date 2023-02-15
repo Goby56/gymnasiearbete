@@ -12,12 +12,22 @@
         "loss_function": "CCE",
         "optimizer": {
             "function": "SGD",
-            "args": ["learn_rate", "optimizer_decay"]
+            "args": {
+                "decay": 0.001,
+                "learn_rate": 0.3
+            }
         },
-        "optimizer_decay": 0.001,
+
         "dataset": "emnist-letters.mat",
         "batch_size": 128,
         "epochs": 10,
-        "learn_rate": 0.3
+        
+        "data_augmentation": {
+            "noise": false,
+            "shift": false,
+            "rotate": false,
+            "scale": false,
+            "blur": false
+        }
     }
 }
