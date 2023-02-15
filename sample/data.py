@@ -25,7 +25,8 @@ class CompiledDataset:
         filename: str,
         image_size: tuple[int, int],
         validation_partition = True,
-        standardize = True
+        standardize = True,
+        data_augmentation: dict = {} # gör till positional arg
     ):
         filepath = os.path.join(self.__data_dir, "EMNIST", filename)
 
@@ -37,6 +38,7 @@ class CompiledDataset:
         self.image_size = image_size
         self.validation_partition = validation_partition
         self.is_standardized = standardize
+        self.augmentations = data_augmentation
 
         mapping = self.__data["mapping"][:, 1].flatten()
         self.labels = np.vectorize(chr)(mapping)
