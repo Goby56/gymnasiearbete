@@ -44,9 +44,10 @@ class Network:
         for layer in reversed(self.layers[:-1]):
             gradients = layer.backward(gradients, temp_cce=False)
 
-        self.model.optimizer.apply_decay()
+        self.model.optimizer.pre_update()
         for layer in self.layers:
             self.model.optimizer.apply_training(layer)
+        self.model.optimzer.post_update()
     
     def train(self, data_points):
         samples, labels = map(np.asarray, zip(*data_points))
