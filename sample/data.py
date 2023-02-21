@@ -26,7 +26,7 @@ class CompiledDataset:
         image_size: tuple[int, int],
         validation_partition = True,
         standardize = True,
-        data_augmentation: dict = {} # gör till positional arg
+        data_augmentation: dict = {}
     ):
         filepath = os.path.join(self.__data_dir, "EMNIST", filename)
 
@@ -73,7 +73,7 @@ class CompiledDataset:
 
             if self.is_standardized:
                 image = self.__standardize_image(image)
-
+            
             label = self.__to_hot_vector(label)
 
             yield (image, label)
@@ -85,6 +85,9 @@ class CompiledDataset:
         out = np.zeros(len(self.labels))
         out[index_int-1] = 1
         return out
+    
+    def __augment_data(self, image):
+        pass
     #endregion private shit
 
     def next_batch(self, batch_size: int):
