@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>360</width>
-    <height>333</height>
+    <width>493</width>
+    <height>435</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,6 +17,9 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
