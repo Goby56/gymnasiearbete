@@ -40,7 +40,6 @@ class CompiledDataset:
         self.validation_partition = validation_partition
         self.is_standardized = standardize
 
-        assert "rotate" in data_augmentation and "noise" in data_augmentation
         self.augmentations = data_augmentation
 
         mapping = self.__data["mapping"][:, 1].flatten()
