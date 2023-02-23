@@ -131,6 +131,3 @@ class Ui_MainWindow:
         self.mode_selector_tab.setCurrentIndex(0)
 
         QMetaObject.connectSlotsByName(MainWindow)
-
-class GUI(Ui_MainWindow):
-    pass

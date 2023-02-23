@@ -8,11 +8,9 @@ class GUI(Ui_MainWindow):
     def __init__(self, main_window: QtWidgets.QMainWindow) -> None:
         self.setupUi(main_window)
 
-
-        main_window.show()
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    gui = GUI(QtWidgets.QMainWindow())
-
-    sys.exit(app.exec_())
+    win = QtWidgets.QMainWindow()
+    gui = GUI(win)
+    win.show()
+    sys.exit(app.exec())
