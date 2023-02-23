@@ -3,6 +3,7 @@ from scipy.io import loadmat
 import numpy as np
 from typing import Union
 from PIL import Image
+import random
 
 class CompiledDataset:
     """
@@ -38,6 +39,8 @@ class CompiledDataset:
         self.image_size = image_size
         self.validation_partition = validation_partition
         self.is_standardized = standardize
+
+        assert "rotate" in data_augmentation and "noise" in data_augmentation
         self.augmentations = data_augmentation
 
         mapping = self.__data["mapping"][:, 1].flatten()
@@ -69,10 +72,23 @@ class CompiledDataset:
         assert target in ["train", "test"], "arg. target not of type 'train', 'test' or 'validation'"
         targeted_data = self.__data[target]
         for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
-            image = np.flip(np.rot90(np.reshape(image, self.image_size), -1), -1).flatten()
+            image = np.flip(np.rot90(np.reshape(image, self.image_size), -1), -1)
+
+            if any(self.augmentations.values()):
+                if self.augmentations["rotate"]:
+                    new_img = Image.fromarray(image, "L")
+                    new_img = new_img.rotate(random.randint(-30, 30), resample=Image.BICUBIC)
+                    image = np.asarray(new_img)
+                if self.augmentations["noise"]:
+                    new_img = (image + np.random.random(image.shape) * 255 * 0.5).astype(int)
+                    image = np.clip(new_img, 0, 255)
+
+            image=image.flatten()
 
             if self.is_standardized:
                 image = self.__standardize_image(image)
+            else:
+                image = image.astype(float) / 255
             
             label = self.__to_hot_vector(label)
 
@@ -85,9 +101,7 @@ class CompiledDataset:
         out = np.zeros(len(self.labels))
         out[index_int-1] = 1
         return out
-    
-    def __augment_data(self, image):
-        pass
+
     #endregion private shit
 
     def next_batch(self, batch_size: int):
@@ -114,6 +128,8 @@ class CompiledDataset:
         if self.is_standardized:
             # Remap values to 0 - 255
             new_array = np.interp(new_array, (new_array.min(), new_array.max()), (0, 255)) 
+        else:
+            new_array *= 255
         return new_array
 
     def convert_label(self, hot_vector: np.ndarray) -> str:
