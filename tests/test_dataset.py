@@ -6,10 +6,19 @@ import os, sys
 sys.path.append(os.getcwd())
 import sample
 
+options = {
+    "noise": True,
+    "shift": False, # no
+    "rotate": True,
+    "scale": False, # no
+    "blur": False # no
+}
 
 dataset = sample.CompiledDataset(
     filename="emnist-digits.mat",
-    image_size=(28, 28)
+    image_size=(28, 28),
+    data_augmentation=options,
+    standardize=False
 )
 
 # test_data = dataset.get_test_data()
@@ -53,25 +62,21 @@ def augment_data(arr, options):
 
     return to_array(new_img)
 
-options = {
-    "noise": True,
-    "shift": False, # no
-    "rotate": True,
-    "scale": False, # no
-    "blur": False # no
-}
-
 # img = load_img()
 # arr = augment_data(img, options)
 # new_img = to_image(arr)
 # new_img.show()
 
-for bad in dataset.next_batch(random.randint(1, 10000)):
-    pass
+# for bad in dataset.next_batch(random.randint(1, 10000)):
+#     pass
 
-img = dataset.get(1, convert=True)
-to_image(augment_data(img[0], options)).show()
-to_image(img[0]).show()
+# img = dataset.get(1, convert=True)
+# to_image(augment_data(img[0], options)).show()
+# to_image(img[0]).show()
+# print(img[1])
+
+img = next(dataset.get(1))
+Image.fromarray(img[0].reshape((28, 28)) * 255).show()
 print(img[1])
 
 
