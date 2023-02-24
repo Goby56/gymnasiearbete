@@ -41,8 +41,17 @@ class Window(QtWidgets.QMainWindow):
             if key == QtCore.Qt.Key.Key_Return and not event.isAutoRepeat() and source == self:
                 img = downscale_img(self.pixels)
                 symbol_drawn = self.gui.symbols_to_draw_list.takeItem(0).text()
-                file_path = os.path.join(survey_file_path, symbol_drawn)
-                img.save(file_path + ".png", "PNG")
+                if symbol_drawn.isdigit():
+                    prefix = "nu"
+                elif symbol_drawn.isupper():
+                    prefix = "up"
+                elif symbol_drawn.islower():
+                    prefix = "lo"
+                drawer = "oscar"
+                file_name = f"{drawer}_{prefix}_{symbol_drawn}.png"
+                file_path = os.path.join(survey_file_path, file_name)
+                img.save(file_path, "PNG")
+                self.reset_canvas(self.gui.draw_canvas_label)
 
         # ----- Handle drawing -----
         if source.objectName() in ["draw_canvas_label", "predict_canvas_label"]:
