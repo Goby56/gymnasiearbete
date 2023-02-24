@@ -69,7 +69,7 @@
        <enum>QTabWidget::South</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>3</number>
       </property>
       <property name="movable">
        <bool>true</bool>
@@ -145,7 +145,7 @@
       </widget>
       <widget class="QWidget" name="draw_tab">
        <attribute name="title">
-        <string>Draw (dev)</string>
+        <string>Draw</string>
        </attribute>
        <attribute name="toolTip">
         <string>Draw a series of images which will be used for testing</string>
@@ -184,6 +184,72 @@
         </item>
         <item>
          <widget class="QListWidget" name="symbols_to_draw_list"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="guess_tab">
+       <attribute name="title">
+        <string>Guess</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="guess_canvas_label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>384</width>
+            <height>384</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>384</width>
+            <height>384</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLabel{ background-color : black; }</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QProgressBar" name="progressBar">
+            <property name="value">
+             <number>24</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="symbol_input_edit"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="next_image_button">
+            <property name="text">
+             <string>Next Image</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="previous_image_button">
+            <property name="text">
+             <string>Previous Image</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
