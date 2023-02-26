@@ -2,3 +2,4 @@ numpy
 scipy
 PIL
 matplotlib
+pyside6

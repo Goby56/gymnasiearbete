@@ -16,7 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
-    QListWidget, QListWidgetItem, QMainWindow, QSizePolicy,
+    QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
+    QProgressBar, QPushButton, QSizePolicy, QSpacerItem,
     QTabWidget, QVBoxLayout, QWidget)
 
 class Ui_gyarte(object):
@@ -24,7 +25,7 @@ class Ui_gyarte(object):
         if not gyarte.objectName():
             gyarte.setObjectName(u"gyarte")
         gyarte.resize(538, 432)
-        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(gyarte.sizePolicy().hasHeightForWidth())
@@ -33,8 +34,12 @@ class Ui_gyarte(object):
         gyarte.setTabShape(QTabWidget.Rounded)
         self.centralwidget = QWidget(gyarte)
         self.centralwidget.setObjectName(u"centralwidget")
-        sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
-        self.centralwidget.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
+        self.centralwidget.setSizePolicy(sizePolicy1)
+        self.centralwidget.setMaximumSize(QSize(538, 432))
         self.verticalLayout = QVBoxLayout(self.centralwidget)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -53,11 +58,11 @@ class Ui_gyarte(object):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.predict_canvas_label = QLabel(self.predict_tab)
         self.predict_canvas_label.setObjectName(u"predict_canvas_label")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.predict_canvas_label.sizePolicy().hasHeightForWidth())
-        self.predict_canvas_label.setSizePolicy(sizePolicy1)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.predict_canvas_label.sizePolicy().hasHeightForWidth())
+        self.predict_canvas_label.setSizePolicy(sizePolicy2)
         self.predict_canvas_label.setMinimumSize(QSize(384, 384))
         self.predict_canvas_label.setMaximumSize(QSize(384, 384))
         self.predict_canvas_label.setCursor(QCursor(Qt.CrossCursor))
@@ -74,11 +79,11 @@ class Ui_gyarte(object):
 
         self.prediction_probability_list = QListWidget(self.predict_tab)
         self.prediction_probability_list.setObjectName(u"prediction_probability_list")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.prediction_probability_list.sizePolicy().hasHeightForWidth())
-        self.prediction_probability_list.setSizePolicy(sizePolicy2)
+        sizePolicy3 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.prediction_probability_list.sizePolicy().hasHeightForWidth())
+        self.prediction_probability_list.setSizePolicy(sizePolicy3)
 
         self.verticalLayout_2.addWidget(self.prediction_probability_list)
 
@@ -89,14 +94,67 @@ class Ui_gyarte(object):
         self.train_tab = QWidget()
         self.train_tab.setObjectName(u"train_tab")
         self.mode_selector_tab.addTab(self.train_tab, "")
+        self.guess_tab = QWidget()
+        self.guess_tab.setObjectName(u"guess_tab")
+        self.horizontalLayout = QHBoxLayout(self.guess_tab)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.guess_canvas_label = QLabel(self.guess_tab)
+        self.guess_canvas_label.setObjectName(u"guess_canvas_label")
+        sizePolicy2.setHeightForWidth(self.guess_canvas_label.sizePolicy().hasHeightForWidth())
+        self.guess_canvas_label.setSizePolicy(sizePolicy2)
+        self.guess_canvas_label.setMinimumSize(QSize(384, 384))
+        self.guess_canvas_label.setMaximumSize(QSize(384, 384))
+        self.guess_canvas_label.setStyleSheet(u"QLabel{ background-color : black; }")
+
+        self.horizontalLayout.addWidget(self.guess_canvas_label)
+
+        self.verticalLayout_3 = QVBoxLayout()
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.survey_config_button = QPushButton(self.guess_tab)
+        self.survey_config_button.setObjectName(u"survey_config_button")
+
+        self.verticalLayout_3.addWidget(self.survey_config_button)
+
+        self.image_guess_input_line = QLineEdit(self.guess_tab)
+        self.image_guess_input_line.setObjectName(u"image_guess_input_line")
+        self.image_guess_input_line.setMinimumSize(QSize(120, 120))
+        self.image_guess_input_line.setMaximumSize(QSize(130, 130))
+
+        self.verticalLayout_3.addWidget(self.image_guess_input_line)
+
+        self.next_image_button = QPushButton(self.guess_tab)
+        self.next_image_button.setObjectName(u"next_image_button")
+
+        self.verticalLayout_3.addWidget(self.next_image_button)
+
+        self.previous_image_button = QPushButton(self.guess_tab)
+        self.previous_image_button.setObjectName(u"previous_image_button")
+
+        self.verticalLayout_3.addWidget(self.previous_image_button)
+
+        self.images_left_progress_bar = QProgressBar(self.guess_tab)
+        self.images_left_progress_bar.setObjectName(u"images_left_progress_bar")
+        self.images_left_progress_bar.setValue(24)
+        self.images_left_progress_bar.setOrientation(Qt.Horizontal)
+
+        self.verticalLayout_3.addWidget(self.images_left_progress_bar)
+
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.verticalLayout_3.addItem(self.verticalSpacer)
+
+
+        self.horizontalLayout.addLayout(self.verticalLayout_3)
+
+        self.mode_selector_tab.addTab(self.guess_tab, "")
         self.draw_tab = QWidget()
         self.draw_tab.setObjectName(u"draw_tab")
         self.horizontalLayout_3 = QHBoxLayout(self.draw_tab)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.draw_canvas_label = QLabel(self.draw_tab)
         self.draw_canvas_label.setObjectName(u"draw_canvas_label")
-        sizePolicy1.setHeightForWidth(self.draw_canvas_label.sizePolicy().hasHeightForWidth())
-        self.draw_canvas_label.setSizePolicy(sizePolicy1)
+        sizePolicy2.setHeightForWidth(self.draw_canvas_label.sizePolicy().hasHeightForWidth())
+        self.draw_canvas_label.setSizePolicy(sizePolicy2)
         self.draw_canvas_label.setMinimumSize(QSize(384, 384))
         self.draw_canvas_label.setMaximumSize(QSize(384, 384))
         self.draw_canvas_label.setCursor(QCursor(Qt.CrossCursor))
@@ -104,10 +162,28 @@ class Ui_gyarte(object):
 
         self.horizontalLayout_3.addWidget(self.draw_canvas_label)
 
+        self.verticalLayout_4 = QVBoxLayout()
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.survey_add_config_button = QPushButton(self.draw_tab)
+        self.survey_add_config_button.setObjectName(u"survey_add_config_button")
+
+        self.verticalLayout_4.addWidget(self.survey_add_config_button)
+
         self.symbols_to_draw_list = QListWidget(self.draw_tab)
         self.symbols_to_draw_list.setObjectName(u"symbols_to_draw_list")
+        sizePolicy2.setHeightForWidth(self.symbols_to_draw_list.sizePolicy().hasHeightForWidth())
+        self.symbols_to_draw_list.setSizePolicy(sizePolicy2)
 
-        self.horizontalLayout_3.addWidget(self.symbols_to_draw_list)
+        self.verticalLayout_4.addWidget(self.symbols_to_draw_list)
+
+        self.start_stop_survey_button = QPushButton(self.draw_tab)
+        self.start_stop_survey_button.setObjectName(u"start_stop_survey_button")
+        self.start_stop_survey_button.setEnabled(True)
+
+        self.verticalLayout_4.addWidget(self.start_stop_survey_button)
+
+
+        self.horizontalLayout_3.addLayout(self.verticalLayout_4)
 
         self.mode_selector_tab.addTab(self.draw_tab, "")
 
@@ -117,7 +193,7 @@ class Ui_gyarte(object):
 
         self.retranslateUi(gyarte)
 
-        self.mode_selector_tab.setCurrentIndex(2)
+        self.mode_selector_tab.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(gyarte)
@@ -126,16 +202,23 @@ class Ui_gyarte(object):
     def retranslateUi(self, gyarte):
         gyarte.setWindowTitle(QCoreApplication.translate("gyarte", u"Gymnasie Arbete AI", None))
         self.predict_canvas_label.setText("")
-        self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.predict_tab), QCoreApplication.translate("gyarte", u"Predict", None))
+        self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.predict_tab), QCoreApplication.translate("gyarte", u"Use model", None))
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.predict_tab), QCoreApplication.translate("gyarte", u"Draw an image and let the AI guess", None))
 #endif // QT_CONFIG(tooltip)
-        self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("gyarte", u"Train", None))
+        self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("gyarte", u"Train model", None))
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("gyarte", u"Create and train a new or existing model", None))
 #endif // QT_CONFIG(tooltip)
+        self.guess_canvas_label.setText("")
+        self.survey_config_button.setText(QCoreApplication.translate("gyarte", u"Configure", None))
+        self.next_image_button.setText(QCoreApplication.translate("gyarte", u"Next Image", None))
+        self.previous_image_button.setText(QCoreApplication.translate("gyarte", u"Previous Image", None))
+        self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.guess_tab), QCoreApplication.translate("gyarte", u"Survey", None))
         self.draw_canvas_label.setText("")
-        self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.draw_tab), QCoreApplication.translate("gyarte", u"Draw (dev)", None))
+        self.survey_add_config_button.setText(QCoreApplication.translate("gyarte", u"Configure", None))
+        self.start_stop_survey_button.setText(QCoreApplication.translate("gyarte", u"Start", None))
+        self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.draw_tab), QCoreApplication.translate("gyarte", u"Add survey samples", None))
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.draw_tab), QCoreApplication.translate("gyarte", u"Draw a series of images which will be used for testing", None))
 #endif // QT_CONFIG(tooltip)

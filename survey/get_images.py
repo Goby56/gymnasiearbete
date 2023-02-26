@@ -14,4 +14,4 @@ for _ in dataset.next_batch(69):
     pass
 
 for image, label in dataset.get(25, convert=True):
-    Image.fromarray(image).convert("L").save(f"survey/emnist-{label}.png")
+    Image.fromarray(image).convert("L").save(f"survey/images/emnist-{label}.png")
