@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageQt
 from typing import List, NamedTuple, Union
 
 from gui_src import Ui_gyarte
+from config_dialog_src import Ui_survey_config_dialog
 
 symbol_mappings = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 survey_file_path = os.path.join(os.getcwd(), "gui", "survey_images")
@@ -68,6 +69,13 @@ class EventHandler:
             return func
         return dec
     
+    @staticmethod
+    def onclick(button_name: str):
+        def dec(func):
+            EventHandler.add(Event(func, QEvent.MouseButtonPress, [button_name], None, [Qt.MouseButton.LeftButton], None))
+            return func
+        return dec
+    
 class Canvas:
     def __init__(self) -> None:
         self.pixels = Image.new("RGB", (128, 128))
@@ -106,13 +114,12 @@ class Window(QtWidgets.QMainWindow):
         self.current_tab = 0
         self.canvas = Canvas()
         
-        self.event_handler = EventHandler()
         self.gui.symbols_to_draw_list.addItems(random.sample(symbol_mappings, 25))
 
     def eventFilter(self, source: QObject, event: QEvent):
-        self.event_handler.trigger(self, source, event)
+        EventHandler.trigger(self, source, event)
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
-    
+
     @EventHandler.on(QEvent.Paint, from_widgets=["mode_selector_tab"])
     def update_tab_index(self, source: QObject, event: QEvent):
         self.current_tab = source.currentIndex()
@@ -126,6 +133,33 @@ class Window(QtWidgets.QMainWindow):
     @EventHandler.on(QEvent.MouseButtonPress, mbuttons=[Qt.MouseButton.RightButton], from_widgets=["draw_canvas_label", "predict_canvas_label"])
     def reset_canvas(self, source: QObject, event: QEvent):
         self.canvas.erease(source)
+
+    #region -x-x-x-x-x-x-x-x-x- Tab : AI Predict -x-x-x-x-x-x-x-x-x-
+
+    @EventHandler.on(QEvent.MouseMove, )
+    def display_prediction(self, source: QObject, event: QEvent):
+        pass
+
+    def get_prediction(self):
+        img = self.canvas.downscaled
+
+    #endregion
+
+    #region -x-x-x-x-x-x-x-x-x- Tab : AI Train -x-x-x-x-x-x-x-x-x-
+
+
+    #endregion
+
+    #region -x-x-x-x-x-x-x-x-x- Tab : Survey Guess -x-x-x-x-x-x-x-x-x-
+
+    @EventHandler.onclick("survey_config_button")
+    def open_survey_dialog(self, source: QObject, event: QEvent):
+        self.survey_dialog = SurveyDialog()
+        self.survey_dialog.show()
+
+    #endregion
+    
+    #region -x-x-x-x-x-x-x-x-x- Tab : Survey Draw -x-x-x-x-x-x-x-x-x-
 
     @EventHandler.on(QEvent.KeyPress, keys=[Qt.Key.Key_Return], tab=3)
     def save_survey_image(self, source: QObject, event: QEvent):
@@ -144,20 +178,24 @@ class Window(QtWidgets.QMainWindow):
         # file_path = os.path.join(survey_file_path, file_name)
         # img.save(file_path, "PNG")
         # self.reset_canvas(self.gui.draw_canvas_label)
-    
-    @EventHandler.on(QEvent.KeyPress, keys=[Qt.Key.Key_O], tab=2)
-    def get_folder(self, source: QObject, event: QEvent):
+
+    #endregion
+
+class SurveyDialog(QtWidgets.QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+        self.gui = Ui_survey_config_dialog()
+        self.gui.setupUi(self)
+
+    def eventFilter(self, source: QObject, event: QEvent) -> bool:
+        EventHandler.trigger(self, source, event)
+        return QtWidgets.QDialog.eventFilter(self, source, event)
+
+    @EventHandler.onclick("survey_chooe_directory_button")
+    def open_folder_selector(self, source: QObject, event: QEvent):
         folder = QtWidgets.QFileDialog.getExistingDirectory(self)
         if folder:
             print(folder)
-
-    @EventHandler.on(QEvent.MouseMove, )
-    def display_prediction(self, source: QObject, event: QEvent):
-        pass
-
-    def get_prediction(self):
-        img = self.canvas.downscaled
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

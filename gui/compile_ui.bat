@@ -1,1 +1,2 @@
-pyside6-uic gui_xml.ui -o gui_src.py -g python
+@echo off
+for %%f in (.\xml\*) do (pyside6-uic %%f -o .\gen\%%~nf%.py -g python)
