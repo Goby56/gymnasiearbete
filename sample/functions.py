@@ -172,7 +172,7 @@ class Optimizer_SGD(Optimzer):
         layer.biases -= self.learn_rate * layer.dbiases
 
 
-class Optimzer_Adam(Optimzer):
+class Optimizer_Adam(Optimzer):
     # Behöver testas
     def __init__(self, *, learn_rate, decay, epsilon, beta_1, beta_2):
         self.learn_rate = learn_rate

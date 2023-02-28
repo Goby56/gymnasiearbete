@@ -47,7 +47,7 @@ class Network:
         self.model.optimizer.pre_update()
         for layer in self.layers:
             self.model.optimizer.apply_training(layer)
-        self.model.optimzer.post_update()
+        self.model.optimizer.post_update()
     
     def train(self, data_points):
         samples, labels = map(np.asarray, zip(*data_points))
