@@ -7,7 +7,8 @@ def train(
         network: Network, 
         dataset: CompiledDataset,
         callback_training: Optional[Callable] = None,
-        callback_validation: Optional[Callable] = None
+        callback_validation: Optional[Callable] = None,
+        callback_epoch: Optional[Callable] = None
     ) -> None:
     model = network.model
     assert dataset.shape == model.shape
@@ -24,5 +25,7 @@ def train(
         # for _ in dataset.validation_data:
         #     if not callback_validation is None:
         #             callback_validation([]) # idk wtf is validation
+        if not callback_epoch is None:
+            callback_epoch(epoch)
 
     network.save()
