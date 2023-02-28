@@ -70,7 +70,10 @@ class Model(dict):
 
     @property
     def has_mapping(self):
-        return hasattr(self, "mapping")
+        try:
+            return hasattr(self, "mapping")
+        except MissingConfigAttribute:
+            return False
 
     def __getattr__(self, attr):
         return self[attr]

@@ -10,7 +10,7 @@ import collections
 from gui_src import Ui_gyarte
 from config_dialog_src import Ui_survey_config_dialog
 
-symbol_mappings = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
+SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 SURVEY_PATH = os.path.join(os.getcwd(), "gui", "survey_images")
 
 sys.path.append(os.getcwd())
@@ -121,7 +121,7 @@ class Window(QtWidgets.QMainWindow):
         self.current_tab = 0
         self.canvas = Canvas()
         
-        self.gui.symbols_to_draw_list.addItems(random.sample(symbol_mappings, 25))
+        self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
 
         self.load_models(blacklist=["test_plot"])
 
@@ -191,7 +191,7 @@ class Window(QtWidgets.QMainWindow):
         if ai.model.has_mapping:
             guess = list(zip(ai.model.mapping, out_vec))
             return sorted(guess, key=lambda x: x[1], reverse=True)
-        return [("N/A", i) for i in np.sort(out_vec)]
+        return [("N/A", i) for i in sorted(out_vec, reverse=True)]
 
     #endregion
 
