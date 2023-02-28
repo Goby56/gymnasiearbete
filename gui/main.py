@@ -5,12 +5,18 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QEvent, QObject, Qt
 from PIL import Image, ImageDraw, ImageFilter, ImageQt
 from typing import List, NamedTuple, Union
+import collections
 
 from gui_src import Ui_gyarte
 from config_dialog_src import Ui_survey_config_dialog
 
 symbol_mappings = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
-survey_file_path = os.path.join(os.getcwd(), "gui", "survey_images")
+SURVEY_PATH = os.path.join(os.getcwd(), "gui", "survey_images")
+
+sys.path.append(os.getcwd())
+PATH_MODELS = os.path.join(os.getcwd(), "data\\models")
+
+import sample
 
 class Event(NamedTuple):
     callback: callable
@@ -72,7 +78,8 @@ class EventHandler:
     @staticmethod
     def onclick(button_name: str):
         def dec(func):
-            EventHandler.add(Event(func, QEvent.MouseButtonPress, [button_name], None, [Qt.MouseButton.LeftButton], None))
+            EventHandler.add(Event(func, QEvent.MouseButtonPress, [button_name], 
+                                   None, [Qt.MouseButton.LeftButton], None))
             return func
         return dec
     
@@ -116,6 +123,8 @@ class Window(QtWidgets.QMainWindow):
         
         self.gui.symbols_to_draw_list.addItems(random.sample(symbol_mappings, 25))
 
+        self.load_models(blacklist=["test_plot"])
+
     def eventFilter(self, source: QObject, event: QEvent):
         EventHandler.trigger(self, source, event)
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
@@ -124,24 +133,63 @@ class Window(QtWidgets.QMainWindow):
     def update_tab_index(self, source: QObject, event: QEvent):
         self.current_tab = source.currentIndex()
 
-    @EventHandler.on(QEvent.MouseButtonPress, mbuttons=[Qt.MouseButton.LeftButton], from_widgets=["draw_canvas_label", "predict_canvas_label"])
-    @EventHandler.on(QEvent.MouseMove, mbuttons=[Qt.MouseButton.LeftButton], from_widgets=["draw_canvas_label", "predict_canvas_label"])
+    @EventHandler.on(QEvent.MouseButtonPress, mbuttons=[Qt.MouseButton.LeftButton], 
+                     from_widgets=["draw_canvas_label", "predict_canvas_label"])
+    @EventHandler.on(QEvent.MouseMove, mbuttons=[Qt.MouseButton.LeftButton], 
+                     from_widgets=["draw_canvas_label", "predict_canvas_label"])
     def draw_on_canvas(self, source: QObject, event: QEvent):
         x, y = event.position().x() / self.canvas.scaler, event.position().y() / self.canvas.scaler
         self.canvas.draw(x, y, source)
 
-    @EventHandler.on(QEvent.MouseButtonPress, mbuttons=[Qt.MouseButton.RightButton], from_widgets=["draw_canvas_label", "predict_canvas_label"])
+    @EventHandler.on(QEvent.MouseButtonPress, mbuttons=[Qt.MouseButton.RightButton], 
+                     from_widgets=["draw_canvas_label", "predict_canvas_label"])
     def reset_canvas(self, source: QObject, event: QEvent):
         self.canvas.erease(source)
 
     #region -x-x-x-x-x-x-x-x-x- Tab : AI Predict -x-x-x-x-x-x-x-x-x-
 
-    @EventHandler.on(QEvent.MouseMove, )
+    @EventHandler.on(QEvent.MouseMove, from_widgets=[])
+    @EventHandler.on(QEvent.MouseButtonRelease, from_widgets=[])
     def display_prediction(self, source: QObject, event: QEvent):
         pass
 
-    def get_prediction(self):
-        img = self.canvas.downscaled
+    def load_models(self, blacklist: list[str] = []) -> None:
+        """
+        Loads all models from "./data/models" that aren't blacklisted.
+
+        Args:
+            (blacklist) A list of model names that are to be blacklisted. Set to empty as default.
+        """
+        model_names = os.listdir(PATH_MODELS)
+        self.models = {}
+        data = collections.namedtuple("data", ["network", "model"])
+
+        for model_name in model_names:
+            if not model_name in blacklist:
+                model = sample.Model(name=model_name)
+                network = sample.Network(model=model)
+                self.models[model_name] = data(network, model)
+
+    def get_prediction(self, model_name: str, standardize=True) -> list[tuple[str, int]]:
+        """
+        Does a forward pass with the given model and return a sorted list of probabilities.
+
+        Args:
+            (model_name) The model name as it apears in the "./data/models" folder.
+            (standardize) If the canvas image should be standardized. Set to True as defualt.
+        Returns:
+            (sorted_probabilities) a sorted list of tupels in the form of (label: str, prob: int)
+        """
+
+        ai = self.models[model_name]
+        image = self.canvas.downscaled.convert("L")
+        in_vec = np.asarray(image).flatten()
+        in_vec = sample.CompiledDataset.standardize_image(in_vec) if standardize else in_vec / 255
+        out_vec = ai.network.forward(in_vec)
+        if ai.model.has_mapping:
+            guess = list(map(ai.model.mapping, out_vec))
+            return guess.sort(lambda x: x[1])
+        return [("N/A", i) for i in out_vec.sort()]
 
     #endregion
 
@@ -191,7 +239,7 @@ class SurveyDialog(QtWidgets.QDialog):
         EventHandler.trigger(self, source, event)
         return QtWidgets.QDialog.eventFilter(self, source, event)
 
-    @EventHandler.onclick("survey_chooe_directory_button")
+    @EventHandler.onclick("survey_chooe_directory_button") # är det verkligen chooe?
     def open_folder_selector(self, source: QObject, event: QEvent):
         folder = QtWidgets.QFileDialog.getExistingDirectory(self)
         if folder:
@@ -200,6 +248,7 @@ class SurveyDialog(QtWidgets.QDialog):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = Window()
+    win.load_models()
     win.show()
     app.installEventFilter(win)
     sys.exit(app.exec())
