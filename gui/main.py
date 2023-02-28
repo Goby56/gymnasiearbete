@@ -1,4 +1,4 @@
-import sys, cv2, os, random
+import sys, cv2, os, random, glob
 import time
 import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -7,8 +7,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageQt
 from typing import List, NamedTuple, Union
 import collections
 
-from gui_src import Ui_gyarte
-from config_dialog_src import Ui_survey_config_dialog
+from gen.main_window import Ui_main_window
+from gen.survey_dialog import Ui_survey_dialog
 
 SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 SURVEY_PATH = os.path.join(os.getcwd(), "gui", "survey_images")
@@ -97,6 +97,10 @@ class Canvas:
         downsampled = cv2.resize(cv_img, dsize=(28, 28), interpolation=cv2.INTER_CUBIC)
         arr2 = cv2.cvtColor(downsampled, cv2.COLOR_BGR2RGB)
         return Image.fromarray(arr2) # Pil img
+    
+    def set_image(self, label: QtWidgets.QLabel, image: Image):
+        self.pixels = image
+        self.set_pixmap(label)
 
     def draw(self, x, y, label: QtWidgets.QLabel):
         size = 3
@@ -116,11 +120,17 @@ class Canvas:
 class Window(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.gui = Ui_gyarte()
+        self.gui = Ui_main_window()
         self.gui.setupUi(self)
         self.current_tab = 0
         self.canvas = Canvas()
         
+
+        self.survey_participant = ""
+        self.survey_images = []
+        self.current_survey_image = 0
+
+
         self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
 
         self.load_models(blacklist=["test_plot"])
@@ -152,7 +162,9 @@ class Window(QtWidgets.QMainWindow):
                      mbuttons=[Qt.MouseButton.LeftButton])
     def display_prediction(self, source: QObject, event: QEvent):
         guesses = self.get_prediction("test_adam")
-        print(guesses[:2])
+        j = lambda p: ":".join([p[0], f"{p[1]:.3f}"])
+        self.gui.prediction_probability_list.clear()
+        self.gui.prediction_probability_list.addItems(map(j, guesses))
 
     def load_models(self, blacklist: list[str] = []) -> None:
         """
@@ -204,8 +216,22 @@ class Window(QtWidgets.QMainWindow):
 
     @EventHandler.onclick("survey_config_button")
     def open_survey_dialog(self, source: QObject, event: QEvent):
-        self.survey_dialog = SurveyDialog()
+        def on_submit(name, path):
+            print(path)
+            # for p in glob.iglob(path+"*")
+            
+        self.survey_dialog = SurveyDialog(on_submit)
+        # self.survey_dialog.setModal(True)
         self.survey_dialog.show()
+
+    @EventHandler.onclick("next_image_button")
+    @EventHandler.onclick("predict_canvas_label")
+    def update_survey_image(self, source: QObject, event: QEvent):
+        if source.objectName() == "next_image_button":
+
+            self.gui.guess_canvas_label
+            self.gui.predict_canvas_label
+
 
     #endregion
     
@@ -232,20 +258,36 @@ class Window(QtWidgets.QMainWindow):
     #endregion
 
 class SurveyDialog(QtWidgets.QDialog):
-    def __init__(self) -> None:
+    def __init__(self, on_submit: callable) -> None:
         super().__init__()
-        self.gui = Ui_survey_config_dialog()
+        self.gui = Ui_survey_dialog()
         self.gui.setupUi(self)
+
+        self.on_submit = on_submit
+        self.folder_selection = ""
+        self.participant_name = ""
 
     def eventFilter(self, source: QObject, event: QEvent) -> bool:
         EventHandler.trigger(self, source, event)
         return QtWidgets.QDialog.eventFilter(self, source, event)
 
-    @EventHandler.onclick("survey_chooe_directory_button") # är det verkligen chooe?
+    @EventHandler.onclick("select_directory_button")
     def open_folder_selector(self, source: QObject, event: QEvent):
         folder = QtWidgets.QFileDialog.getExistingDirectory(self)
         if folder:
-            print(folder)
+            self.folder_selection = folder
+
+    @EventHandler.onclick("submit_config_button")
+    def submit_config(self, source: QObject, event: QEvent):
+        print(type(self.gui))
+        self.participant_name = self.gui.participant_name_line_edit.text()
+        print(self.participant_name, self.folder_selection)
+        if self.folder_selection and self.participant_name:
+            self.on_submit(self.participant_name, self.folder_selection)
+        else:
+            # Raise error if not enough information was provided
+            pass
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
