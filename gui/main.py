@@ -148,10 +148,11 @@ class Window(QtWidgets.QMainWindow):
 
     #region -x-x-x-x-x-x-x-x-x- Tab : AI Predict -x-x-x-x-x-x-x-x-x-
 
-    @EventHandler.on(QEvent.MouseMove, from_widgets=[])
-    @EventHandler.on(QEvent.MouseButtonRelease, from_widgets=[])
+    @EventHandler.on(QEvent.MouseButtonRelease, from_widgets=["predict_canvas_label"], 
+                     mbuttons=[Qt.MouseButton.LeftButton])
     def display_prediction(self, source: QObject, event: QEvent):
-        pass
+        guesses = self.get_prediction("test_adam")
+        print(guesses[:2])
 
     def load_models(self, blacklist: list[str] = []) -> None:
         """
@@ -184,12 +185,13 @@ class Window(QtWidgets.QMainWindow):
         ai = self.models[model_name]
         image = self.canvas.downscaled.convert("L")
         in_vec = np.asarray(image).flatten()
-        in_vec = sample.CompiledDataset.standardize_image(in_vec) if standardize else in_vec / 255
-        out_vec = ai.network.forward(in_vec)
+        in_vec.shape = (1, len(in_vec))
+        #in_vec = sample.CompiledDataset.standardize_image(in_vec) if standardize else in_vec / 255
+        out_vec = ai.network.forward(in_vec).flatten()
         if ai.model.has_mapping:
-            guess = list(map(ai.model.mapping, out_vec))
-            return guess.sort(lambda x: x[1])
-        return [("N/A", i) for i in out_vec.sort()]
+            guess = list(zip(ai.model.mapping, out_vec))
+            return sorted(guess, key=lambda x: x[1], reverse=True)
+        return [("N/A", i) for i in np.sort(out_vec)]
 
     #endregion
 
