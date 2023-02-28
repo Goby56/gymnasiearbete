@@ -5,6 +5,33 @@ from typing import Union
 from PIL import Image
 import random
 
+def convert_image(flat_array: np.ndarray, image_size: tuple[int, int], standardized=True) -> np.ndarray:
+        """
+        un-standardizes values if standardize=True
+        Arguments:
+            flat_array: np.ndarray --- a flat np.ndarray with length image_size[0]*image_size[1]
+        Returns:
+            np.ndarray --- a np.ndarray with shape image_size
+        """
+        new_array = flat_array.reshape(image_size)
+        if standardized:
+            # Remap values to 0 - 255
+            new_array = np.interp(new_array, (new_array.min(), new_array.max()), (0, 255)) 
+        else:
+            new_array *= 255
+        return new_array
+
+def convert_label(hot_vector: np.ndarray, mapping: list) -> str:
+    """
+    Arguments:
+        hot_vector: np.ndarray --- a one-hot vector of type np.ndarray
+    Returns:
+        str --- the character that the one-hot vector represents acording to dataset mapping
+    """
+    labels = np.asarray(mapping)
+    return labels[np.where(hot_vector==1)[0]][0]
+
+
 class CompiledDataset:
     """
     ## CompiledDataset
@@ -27,7 +54,8 @@ class CompiledDataset:
         image_size: tuple[int, int],
         validation_partition = True,
         standardize = True,
-        data_augmentation: dict = {}
+        data_augmentation: dict = {},
+        subtract_label = False
     ):
         filepath = os.path.join(self.__data_dir, "EMNIST", filename)
 
@@ -35,6 +63,7 @@ class CompiledDataset:
             raise Exception("Dataset not found! Download the EMNIST dataset from Google Drive")
 
         self.__data = loadmat(filepath, simplify_cells = True)["dataset"]
+        self.__subtract_label = subtract_label
 
         self.image_size = image_size
         self.validation_partition = validation_partition
@@ -85,7 +114,7 @@ class CompiledDataset:
             image=image.flatten()
 
             if self.is_standardized:
-                image = self.__standardize_image(image)
+                image = self.standardize_image(image)
             else:
                 image = image.astype(float) / 255
             
@@ -93,13 +122,14 @@ class CompiledDataset:
 
             yield (image, label)
 
-    def __standardize_image(self, image):
-        return (image - np.mean(image)) / np.std(image)
-
     def __to_hot_vector(self, index_int: int) -> Union[str, np.ndarray]:
         out = np.zeros(len(self.labels))
-        out[index_int-1] = 1
+        out[index_int-self.__subtract_label] = 1
         return out
+    
+    @staticmethod
+    def standardize_image(flat_array):
+        return (flat_array - np.mean(flat_array)) / np.std(flat_array)
 
     #endregion private shit
 
@@ -123,13 +153,7 @@ class CompiledDataset:
         Returns:
             np.ndarray --- a np.ndarray with shape image_size
         """
-        new_array = flat_array.reshape(self.image_size)
-        if self.is_standardized:
-            # Remap values to 0 - 255
-            new_array = np.interp(new_array, (new_array.min(), new_array.max()), (0, 255)) 
-        else:
-            new_array *= 255
-        return new_array
+        return convert_image(flat_array, self.image_size, standardized=self.is_standardized)
 
     def convert_label(self, hot_vector: np.ndarray) -> str:
         """
@@ -138,7 +162,7 @@ class CompiledDataset:
         Returns:
             str --- the character that the one-hot vector represents acording to dataset mapping
         """
-        return self.labels[np.where(hot_vector==1)[0]][0]
+        return convert_label(hot_vector, self.labels)
 
     def get(self, amount: int, convert: bool=False) -> tuple[np.ndarray, Union[str, np.ndarray]]:
         """
@@ -158,5 +182,5 @@ class CompiledDataset:
 
         data = self.next_batch(amount)
         if amount > 1:
-            return conv(data) if convert else data
-        return conv(data)[0] if convert else data
+            return conv(data) if convert else next(data)
+        return conv(data)[0] if convert else next(data)
