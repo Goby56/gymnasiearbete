@@ -24,6 +24,8 @@ class Template:
         self.network = sample.Network(self.model)
         self.dataset = sample.CompiledDataset(
             filename=self.model.dataset,
+            data_augmentation=self.model.data_augmentation,
+            #standardize= not any(self.model.data_augmentation.values()),
             **dataset_kwargs
         )
         
@@ -40,7 +42,8 @@ class Template:
             network=self.network,
             dataset=self.dataset,
             callback_training=self.callback_training,
-            callback_validation=self.callback_validation
+            callback_validation=self.callback_validation,
+            callback_epoch=self.callback_epoch
         )
         print(f"Training finished!")
 
@@ -51,3 +54,6 @@ class Template:
             
     def callback_validation(self, summary):
         pass
+
+    def callback_epoch(self, epoch):
+        print(f"Finished epoch {epoch}")
