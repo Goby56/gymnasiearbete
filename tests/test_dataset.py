@@ -15,10 +15,10 @@ options = {
 }
 
 dataset = sample.CompiledDataset(
-    filename="emnist-digits.mat",
+    filename="emnist-balanced.mat",
     image_size=(28, 28),
-    data_augmentation=options,
-    standardize=False
+    #data_augmentation=options,
+    standardize=True
 )
 
 # test_data = dataset.get_test_data()
@@ -75,9 +75,13 @@ def augment_data(arr, options):
 # to_image(img[0]).show()
 # print(img[1])
 
-img = next(dataset.get(1))
-Image.fromarray(img[0].reshape((28, 28)) * 255).show()
-print(img[1])
+for _ in dataset.next_batch(random.randint(1, 10000)): pass
+
+image, label = dataset.get(1)
+image = dataset.convert_image(image)
+label = dataset.convert_label(label)
+Image.fromarray(image).show()
+print(label)
 
 
 
