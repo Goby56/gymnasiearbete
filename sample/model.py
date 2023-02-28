@@ -49,7 +49,7 @@ class Model(dict):
         def get(var):
             function = getattr(functions, var, None)
             if function is None:
-                raise Exception(f'function "{function}" does not exist!')
+                raise Exception(f'function "{var}" does not exist!')
             return function
 
         # init setup hyperparams
@@ -67,6 +67,10 @@ class Model(dict):
 
         in_, *_, out_ = self.structure["nodes"]
         self.shape = (in_, out_)
+
+    @property
+    def has_mapping(self):
+        return hasattr(self, "mapping")
 
     def __getattr__(self, attr):
         return self[attr]
