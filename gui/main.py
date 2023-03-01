@@ -1,4 +1,4 @@
-import sys, cv2, os, random, glob
+import sys, cv2, os, random, glob, json
 import time
 import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -10,11 +10,12 @@ import collections
 from gen.main_window import Ui_main_window
 from gen.survey_dialog import Ui_survey_dialog
 
-SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
-SURVEY_PATH = os.path.join(os.getcwd(), "gui", "survey_images")
-
 sys.path.append(os.getcwd())
-PATH_MODELS = os.path.join(os.getcwd(), "data\\models")
+SURVEY_IMAGES_PATH = os.path.join(os.getcwd(), "survey\\images")
+SURVEY_GUESSES_PATH = os.path.join(os.getcwd(), "survey\\guesses")
+MODELS_PATH = os.path.join(os.getcwd(), "data\\models")
+
+SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 
 import sample
 
@@ -40,17 +41,21 @@ class EventHandler:
         cls.listeners.remove(e)
 
     @classmethod
-    def trigger(cls, ref: object, source: QObject, event: QEvent):
+    def trigger(cls, ref: object, source: QObject, event: QEvent): 
         for callback, etype, widgets, keys, mbuttons, tab in cls.listeners:
+            if callback.__qualname__.split(".")[0] != ref.__class__.__name__:
+                continue
             if event.type() != etype:
                 continue
-            if type(source) == type(ref):
-                continue
+            # if type(source) == type(ref):
+            #     continue
+            if type(ref) == SurveyDialog:
+                print(callback)
             if widgets != None and source.objectName() not in widgets:
                 continue
             if tab != None and tab != ref.current_tab:
                 continue
-            
+
             if event.type() == QEvent.KeyPress: 
                 if type(source) != QtGui.QWindow:
                     continue
@@ -126,10 +131,12 @@ class Window(QtWidgets.QMainWindow):
         self.canvas = Canvas()
         
 
-        self.survey_participant = ""
-        self.survey_images = []
+        # SURVEY STUFF
+        self.survey_participant = "karl"
+        self.survey_images = self.load_images(SURVEY_IMAGES_PATH)
+        random.shuffle(self.survey_images)
         self.current_survey_image = 0
-
+        self.canvas.set_image(self.gui.guess_canvas_label, self.survey_images[self.current_survey_image])
 
         self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
 
@@ -173,7 +180,7 @@ class Window(QtWidgets.QMainWindow):
         Args:
             (blacklist) A list of model names that are to be blacklisted. Set to empty as default.
         """
-        model_names = os.listdir(PATH_MODELS)
+        model_names = os.listdir(MODELS_PATH)
         self.models = {}
         data = collections.namedtuple("data", ["network", "model"])
 
@@ -221,17 +228,49 @@ class Window(QtWidgets.QMainWindow):
             # for p in glob.iglob(path+"*")
             
         self.survey_dialog = SurveyDialog(on_submit)
-        # self.survey_dialog.setModal(True)
         self.survey_dialog.show()
 
     @EventHandler.onclick("next_image_button")
-    @EventHandler.onclick("predict_canvas_label")
+    @EventHandler.onclick("previous_image_button")
     def update_survey_image(self, source: QObject, event: QEvent):
         if source.objectName() == "next_image_button":
+            self.next_survey_image(1)
+        else:
+            self.next_survey_image(-1)
+            # TODO SHOW PREVIOUS ANSWER
 
-            self.gui.guess_canvas_label
-            self.gui.predict_canvas_label
+    @EventHandler.on(QEvent.KeyPress, keys=[Qt.Key.Key_Return], tab=2)
+    def submit_guess(self, source: QObject, event: QEvent):
+        guess = self.gui.image_guess_input_line.text()
+        img = self.survey_images[self.current_survey_image].filename.split("\\")[-1]
+        
+        # Casper du får gärna fixa det här men jag är så jävla trött och fick inget annat att funka
+        guess_file = SURVEY_GUESSES_PATH+f"\\{self.survey_participant}.json"
+        if not os.path.exists(guess_file):
+            with open(guess_file, "x") as f:
+                guesses = {}
+        else:
+            with open(guess_file, "r") as f:
+                guesses = json.load(f)
+        guesses[img] = guess
+        with open(guess_file, "w") as f:
+            json.dump(guesses, f, indent=4)
+        
+        # TODO UPDATE PROGRESS BAR
+        self.next_survey_image(1)
+        self.gui.image_guess_input_line.clear()
 
+
+    def next_survey_image(self, step: int):
+        # TODO OUT OF RANGE ERROR
+        self.current_survey_image += step
+        self.canvas.set_image(self.gui.guess_canvas_label, self.survey_images[self.current_survey_image])
+
+    def load_images(self, path: str):
+        imgs = []
+        for p in glob.iglob(path+"\\*"):
+            imgs.append(Image.open(p))
+        return imgs
 
     #endregion
     
@@ -261,6 +300,8 @@ class SurveyDialog(QtWidgets.QDialog):
     def __init__(self, on_submit: callable) -> None:
         super().__init__()
         self.gui = Ui_survey_dialog()
+        self.installEventFilter(self)
+        self.setModal(True)
         self.gui.setupUi(self)
 
         self.on_submit = on_submit
@@ -279,9 +320,8 @@ class SurveyDialog(QtWidgets.QDialog):
 
     @EventHandler.onclick("submit_config_button")
     def submit_config(self, source: QObject, event: QEvent):
-        print(type(self.gui))
+        print(self)
         self.participant_name = self.gui.participant_name_line_edit.text()
-        print(self.participant_name, self.folder_selection)
         if self.folder_selection and self.participant_name:
             self.on_submit(self.participant_name, self.folder_selection)
         else:
