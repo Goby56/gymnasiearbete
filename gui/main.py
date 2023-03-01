@@ -135,6 +135,10 @@ class Window(QtWidgets.QMainWindow):
 
         self.load_models(blacklist=["test_plot"])
 
+    @property
+    def selected_model(self):
+        return "test_adam"  # fixa så man kan välja modell i combobox. modelerna finns som strings i self.models.keys()
+
     def eventFilter(self, source: QObject, event: QEvent):
         EventHandler.trigger(self, source, event)
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
@@ -161,7 +165,7 @@ class Window(QtWidgets.QMainWindow):
     @EventHandler.on(QEvent.MouseButtonRelease, from_widgets=["predict_canvas_label"], 
                      mbuttons=[Qt.MouseButton.LeftButton])
     def display_prediction(self, source: QObject, event: QEvent):
-        guesses = self.get_prediction("test_adam") # fixa så man kan välja modell i combobox. modelerna finns som strings i self.models.keys()
+        guesses = self.get_prediction(self.selected_model)
         fomatted_guesses = [f"{p[0]}\t{p[1]*100:.0f}%" for p in guesses] # är det möjligt att göra lådan lite lite bredare så det inte behövs en vertical scroll?
         self.gui.prediction_probability_list.clear()
         self.gui.prediction_probability_list.addItems(fomatted_guesses)
@@ -209,6 +213,36 @@ class Window(QtWidgets.QMainWindow):
 
     #region -x-x-x-x-x-x-x-x-x- Tab : AI Train -x-x-x-x-x-x-x-x-x-
 
+    def train_ai(self, callbacks: dict, dataset_options: dict) -> None:
+        """
+        Trains the selected ai.
+
+        Args:
+            (callbacks) A dict of callback functions. Must have keys 
+                "callback_training", "callback_validation", and "callback_epoch".\n
+                The functions should look like the following:
+                callback_training(summary: collections.namedtuple) -> None
+                callback_validation(summary: collections.namedtuple) -> None
+                callback_epoch(epoch: int) -> None
+            
+            (dataset_options) The dataset keywords excluding dataset_augmentaion. 
+                "image_size": tuple[int, int] must be included
+
+        """
+        ai = self.models[self.selected_model]
+        assert "image_size" in dataset_options, "image_size must be included in dataset_options"
+
+        dataset = sample.CompiledDataset(
+            filename=ai.model.dataset,
+            data_augmentation=ai.model.data_augmentation,
+            **dataset_options
+        )
+
+        sample.train.train(
+            network=ai.network,
+            dataset=dataset,
+            **callbacks
+        )
 
     #endregion
 
