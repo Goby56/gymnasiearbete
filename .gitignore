@@ -2,4 +2,5 @@ data/EMNIST
 sample/__pycache__
 analysis/__pycache__
 gui/__pycache__
+gui/gen/__pycache__
 tests/__pycache__

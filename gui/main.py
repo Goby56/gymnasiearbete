@@ -161,10 +161,10 @@ class Window(QtWidgets.QMainWindow):
     @EventHandler.on(QEvent.MouseButtonRelease, from_widgets=["predict_canvas_label"], 
                      mbuttons=[Qt.MouseButton.LeftButton])
     def display_prediction(self, source: QObject, event: QEvent):
-        guesses = self.get_prediction("test_adam")
-        j = lambda p: ":".join([p[0], f"{p[1]:.3f}"])
+        guesses = self.get_prediction("test_adam") # fixa så man kan välja modell i combobox. modelerna finns som strings i self.models.keys()
+        fomatted_guesses = [f"{p[0]}\t{p[1]*100:.0f}%" for p in guesses] # är det möjligt att göra lådan lite lite bredare så det inte behövs en vertical scroll?
         self.gui.prediction_probability_list.clear()
-        self.gui.prediction_probability_list.addItems(map(j, guesses))
+        self.gui.prediction_probability_list.addItems(fomatted_guesses)
 
     def load_models(self, blacklist: list[str] = []) -> None:
         """
