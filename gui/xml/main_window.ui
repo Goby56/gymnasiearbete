@@ -135,6 +135,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>18</pointsize>
+             </font>
+            </property>
            </widget>
           </item>
          </layout>
@@ -148,6 +154,29 @@
        <attribute name="toolTip">
         <string>Create and train a new or existing model</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QPushButton" name="configure_training_button">
+            <property name="text">
+             <string>Configure</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="toggle_training_button">
+            <property name="text">
+             <string>Start</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QGraphicsView" name="plot_canvas"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="guess_tab">
        <attribute name="title">
@@ -204,6 +233,18 @@
               <width>130</width>
               <height>130</height>
              </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>72</pointsize>
+             </font>
+            </property>
+            <property name="autoFillBackground">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string/>
             </property>
            </widget>
           </item>
@@ -303,6 +344,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>72</pointsize>
+             </font>
             </property>
            </widget>
           </item>

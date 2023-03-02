@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
-    QProgressBar, QPushButton, QSizePolicy, QSpacerItem,
-    QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QGraphicsView, QHBoxLayout,
+    QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QMainWindow, QProgressBar, QPushButton, QSizePolicy,
+    QSpacerItem, QTabWidget, QVBoxLayout, QWidget)
 
 class Ui_main_window(object):
     def setupUi(self, main_window):
@@ -84,6 +84,10 @@ class Ui_main_window(object):
         sizePolicy3.setVerticalStretch(0)
         sizePolicy3.setHeightForWidth(self.prediction_probability_list.sizePolicy().hasHeightForWidth())
         self.prediction_probability_list.setSizePolicy(sizePolicy3)
+        font = QFont()
+        font.setFamilies([u"Consolas"])
+        font.setPointSize(18)
+        self.prediction_probability_list.setFont(font)
 
         self.verticalLayout_2.addWidget(self.prediction_probability_list)
 
@@ -93,6 +97,28 @@ class Ui_main_window(object):
         self.mode_selector_tab.addTab(self.predict_tab, "")
         self.train_tab = QWidget()
         self.train_tab.setObjectName(u"train_tab")
+        self.verticalLayout_5 = QVBoxLayout(self.train_tab)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.configure_training_button = QPushButton(self.train_tab)
+        self.configure_training_button.setObjectName(u"configure_training_button")
+
+        self.horizontalLayout_4.addWidget(self.configure_training_button)
+
+        self.toggle_training_button = QPushButton(self.train_tab)
+        self.toggle_training_button.setObjectName(u"toggle_training_button")
+
+        self.horizontalLayout_4.addWidget(self.toggle_training_button)
+
+
+        self.verticalLayout_5.addLayout(self.horizontalLayout_4)
+
+        self.plot_canvas = QGraphicsView(self.train_tab)
+        self.plot_canvas.setObjectName(u"plot_canvas")
+
+        self.verticalLayout_5.addWidget(self.plot_canvas)
+
         self.mode_selector_tab.addTab(self.train_tab, "")
         self.guess_tab = QWidget()
         self.guess_tab.setObjectName(u"guess_tab")
@@ -119,6 +145,11 @@ class Ui_main_window(object):
         self.image_guess_input_line.setObjectName(u"image_guess_input_line")
         self.image_guess_input_line.setMinimumSize(QSize(120, 120))
         self.image_guess_input_line.setMaximumSize(QSize(130, 130))
+        font1 = QFont()
+        font1.setFamilies([u"Consolas"])
+        font1.setPointSize(72)
+        self.image_guess_input_line.setFont(font1)
+        self.image_guess_input_line.setAutoFillBackground(False)
 
         self.verticalLayout_3.addWidget(self.image_guess_input_line)
 
@@ -173,6 +204,7 @@ class Ui_main_window(object):
         self.symbols_to_draw_list.setObjectName(u"symbols_to_draw_list")
         sizePolicy2.setHeightForWidth(self.symbols_to_draw_list.sizePolicy().hasHeightForWidth())
         self.symbols_to_draw_list.setSizePolicy(sizePolicy2)
+        self.symbols_to_draw_list.setFont(font1)
 
         self.verticalLayout_4.addWidget(self.symbols_to_draw_list)
 
@@ -206,12 +238,15 @@ class Ui_main_window(object):
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.predict_tab), QCoreApplication.translate("main_window", u"Draw an image and let the AI guess", None))
 #endif // QT_CONFIG(tooltip)
+        self.configure_training_button.setText(QCoreApplication.translate("main_window", u"Configure", None))
+        self.toggle_training_button.setText(QCoreApplication.translate("main_window", u"Start", None))
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("main_window", u"Train model", None))
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("main_window", u"Create and train a new or existing model", None))
 #endif // QT_CONFIG(tooltip)
         self.guess_canvas_label.setText("")
         self.survey_config_button.setText(QCoreApplication.translate("main_window", u"Configure", None))
+        self.image_guess_input_line.setText("")
         self.next_image_button.setText(QCoreApplication.translate("main_window", u"Next Image", None))
         self.previous_image_button.setText(QCoreApplication.translate("main_window", u"Previous Image", None))
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.guess_tab), QCoreApplication.translate("main_window", u"Survey", None))

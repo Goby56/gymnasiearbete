@@ -172,7 +172,7 @@ class Window(QtWidgets.QMainWindow):
                      mbuttons=[Qt.MouseButton.LeftButton])
     def display_prediction(self, source: QObject, event: QEvent):
         guesses = self.get_prediction(self.selected_model)
-        fomatted_guesses = [f"{p[0]}\t{p[1]*100:.0f}%" for p in guesses] # är det möjligt att göra lådan lite lite bredare så det inte behövs en vertical scroll?
+        fomatted_guesses = [f"{p[0]}:{p[1]*100:.0f}%" for p in guesses] # är det möjligt att göra lådan lite lite bredare så det inte behövs en vertical scroll?
         self.gui.prediction_probability_list.clear()
         self.gui.prediction_probability_list.addItems(fomatted_guesses)
 
