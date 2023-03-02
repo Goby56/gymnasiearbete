@@ -103,9 +103,9 @@ class Canvas:
         arr2 = cv2.cvtColor(downsampled, cv2.COLOR_BGR2RGB)
         return Image.fromarray(arr2) # Pil img
     
-    def set_image(self, label: QtWidgets.QLabel, image: Image, is_native=False):
-        self.pixels = image
-        self.set_pixmap(label, is_native)
+    # def set_image(self, label: QtWidgets.QLabel, image: Image):
+    #     self.pixels = image
+    #     self.set_pixmap(label)
 
     def draw(self, x, y, label: QtWidgets.QLabel):
         size = 3
@@ -116,8 +116,8 @@ class Canvas:
         self.drawer.rectangle((0, 0, 128, 128), fill="black", outline="black")
         self.set_pixmap(label)
 
-    def set_pixmap(self, label: QtWidgets.QLabel, is_native: bool):
-        pil_img = self.pixels if is_native else self.downscaled
+    def set_pixmap(self, label: QtWidgets.QLabel, image: Image = None):
+        pil_img = self.downscaled if image == None else image
         qt_img = ImageQt.ImageQt(pil_img)
         pixmap = QtGui.QPixmap.fromImage(qt_img)
         pixmap = pixmap.scaled(128*self.scaler, 128*self.scaler)
@@ -134,10 +134,11 @@ class Window(QtWidgets.QMainWindow):
         # SURVEY STUFF
         self.survey_participant = "karl"
         self.survey_images = self.load_images(SURVEY_IMAGES_PATH)
+        random.seed(69)
         random.shuffle(self.survey_images)
         self.current_survey_image = 0
-        self.canvas.set_image(self.gui.guess_canvas_label, 
-                              self.survey_images[self.current_survey_image], is_native=True)
+        self.canvas.set_pixmap(self.gui.guess_canvas_label, 
+                              self.survey_images[self.current_survey_image])
 
         self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
 
@@ -277,6 +278,8 @@ class Window(QtWidgets.QMainWindow):
     @EventHandler.on(QEvent.KeyPress, keys=[Qt.Key.Key_Return], tab=2)
     def submit_guess(self, source: QObject, event: QEvent):
         guess = self.gui.image_guess_input_line.text()
+        if not guess:
+            return
         img = self.survey_images[self.current_survey_image].filename
         
         # Casper du får gärna fixa det här men jag är så jävla trött och fick inget annat att funka
@@ -301,8 +304,8 @@ class Window(QtWidgets.QMainWindow):
         self.current_survey_image += step
         if self.current_survey_image > len(self.survey_images):
             return
-        self.canvas.set_image(self.gui.guess_canvas_label, 
-                              self.survey_images[self.current_survey_image], is_native=True)
+        self.canvas.set_pixmap(self.gui.guess_canvas_label, 
+                              self.survey_images[self.current_survey_image])
 
     def load_images(self, path: str):
         images = []
