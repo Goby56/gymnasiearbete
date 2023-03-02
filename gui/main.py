@@ -103,9 +103,9 @@ class Canvas:
         arr2 = cv2.cvtColor(downsampled, cv2.COLOR_BGR2RGB)
         return Image.fromarray(arr2) # Pil img
     
-    def set_image(self, label: QtWidgets.QLabel, image: Image):
+    def set_image(self, label: QtWidgets.QLabel, image: Image, is_native=False):
         self.pixels = image
-        self.set_pixmap(label)
+        self.set_pixmap(label, is_native)
 
     def draw(self, x, y, label: QtWidgets.QLabel):
         size = 3
@@ -116,8 +116,9 @@ class Canvas:
         self.drawer.rectangle((0, 0, 128, 128), fill="black", outline="black")
         self.set_pixmap(label)
 
-    def set_pixmap(self, label: QtWidgets.QLabel):
-        qt_img = ImageQt.ImageQt(self.downscaled)
+    def set_pixmap(self, label: QtWidgets.QLabel, is_native: bool):
+        pil_img = self.pixels if is_native else self.downscaled
+        qt_img = ImageQt.ImageQt(pil_img)
         pixmap = QtGui.QPixmap.fromImage(qt_img)
         pixmap = pixmap.scaled(128*self.scaler, 128*self.scaler)
         label.setPixmap(pixmap)
@@ -128,15 +129,15 @@ class Window(QtWidgets.QMainWindow):
         self.gui = Ui_main_window()
         self.gui.setupUi(self)
         self.current_tab = 0
-        self.canvas = Canvas()
-        
+        self.canvas = Canvas()        
 
         # SURVEY STUFF
         self.survey_participant = "karl"
         self.survey_images = self.load_images(SURVEY_IMAGES_PATH)
         random.shuffle(self.survey_images)
         self.current_survey_image = 0
-        self.canvas.set_image(self.gui.guess_canvas_label, self.survey_images[self.current_survey_image])
+        self.canvas.set_image(self.gui.guess_canvas_label, 
+                              self.survey_images[self.current_survey_image], is_native=True)
 
         self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
 
@@ -276,7 +277,7 @@ class Window(QtWidgets.QMainWindow):
     @EventHandler.on(QEvent.KeyPress, keys=[Qt.Key.Key_Return], tab=2)
     def submit_guess(self, source: QObject, event: QEvent):
         guess = self.gui.image_guess_input_line.text()
-        img = self.survey_images[self.current_survey_image].filename.split("\\")[-1]
+        img = self.survey_images[self.current_survey_image].filename
         
         # Casper du får gärna fixa det här men jag är så jävla trött och fick inget annat att funka
         guess_file = SURVEY_GUESSES_PATH+f"\\{self.survey_participant}.json"
@@ -298,14 +299,38 @@ class Window(QtWidgets.QMainWindow):
     def next_survey_image(self, step: int):
         # TODO OUT OF RANGE ERROR
         self.current_survey_image += step
-        self.canvas.set_image(self.gui.guess_canvas_label, self.survey_images[self.current_survey_image])
+        if self.current_survey_image > len(self.survey_images):
+            return
+        self.canvas.set_image(self.gui.guess_canvas_label, 
+                              self.survey_images[self.current_survey_image], is_native=True)
 
     def load_images(self, path: str):
-        imgs = []
+        images = []
         for p in glob.iglob(path+"\\*"):
-            imgs.append(Image.open(p))
-        return imgs
+            pil_img = Image.open(p)
+            pil_img.filename = pil_img.filename.split("\\")[-1]
+            images.append(pil_img)
+        return images
 
+    @staticmethod
+    def save_emnist_images(amount: int):
+        """
+        Only used to load and save emnist images to be used in the survey.
+        """
+        dataset = sample.CompiledDataset(filename="emnist-balanced.mat", image_size=(28, 28))
+        samples = dataset.get(amount, convert=True)
+        occurences = {}
+        for i in range(amount):
+            label = samples[i][1]
+            if label in occurences:
+                occurences[label] += 1
+            else:
+                occurences[label] = 0            
+            pil_img = Image.fromarray(samples[i][0]).convert("RGB")
+            fn = f"emnist_{samples[i][1]}({occurences[label]}).png"
+            path = SURVEY_IMAGES_PATH+f"\\{fn}"
+            pil_img.save(path)
+         
     #endregion
     
     #region -x-x-x-x-x-x-x-x-x- Tab : Survey Draw -x-x-x-x-x-x-x-x-x-
