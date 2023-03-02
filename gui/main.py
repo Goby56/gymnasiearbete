@@ -102,10 +102,6 @@ class Canvas:
         downsampled = cv2.resize(cv_img, dsize=(28, 28), interpolation=cv2.INTER_CUBIC)
         arr2 = cv2.cvtColor(downsampled, cv2.COLOR_BGR2RGB)
         return Image.fromarray(arr2) # Pil img
-    
-    # def set_image(self, label: QtWidgets.QLabel, image: Image):
-    #     self.pixels = image
-    #     self.set_pixmap(label)
 
     def draw(self, x, y, label: QtWidgets.QLabel):
         size = 3
@@ -139,6 +135,7 @@ class Window(QtWidgets.QMainWindow):
         self.current_survey_image = 0
         self.canvas.set_pixmap(self.gui.guess_canvas_label, 
                               self.survey_images[self.current_survey_image])
+        self.gui.images_left_progress_bar.setValue(0)
 
         self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
 
@@ -273,7 +270,7 @@ class Window(QtWidgets.QMainWindow):
             self.next_survey_image(1)
         else:
             self.next_survey_image(-1)
-            # TODO SHOW PREVIOUS ANSWER
+        self.update_survey_guess_field()
 
     @EventHandler.on(QEvent.KeyPress, keys=[Qt.Key.Key_Return], tab=2)
     def submit_guess(self, source: QObject, event: QEvent):
@@ -282,25 +279,39 @@ class Window(QtWidgets.QMainWindow):
             return
         img = self.survey_images[self.current_survey_image].filename
         
-        # Casper du får gärna fixa det här men jag är så jävla trött och fick inget annat att funka
+        percentage = self.save_guess(img, guess)
+        self.gui.images_left_progress_bar.setValue(percentage)
+        self.next_survey_image(1)
+        self.update_survey_guess_field()
+
+    def update_survey_guess_field(self):
+        guesses = self.get_guesses()
+        img = self.survey_images[self.current_survey_image].filename
+        if img in guesses:
+            self.gui.image_guess_input_line.setText(guesses[img])
+        else:
+            self.gui.image_guess_input_line.clear()
+
+    def get_guesses(self):
         guess_file = SURVEY_GUESSES_PATH+f"\\{self.survey_participant}.json"
         if not os.path.exists(guess_file):
-            with open(guess_file, "x") as f:
+            with open(guess_file, "w") as f:
                 guesses = {}
+                json.dump(guesses, f, indent=4)
         else:
             with open(guess_file, "r") as f:
                 guesses = json.load(f)
-        guesses[img] = guess
+        return guesses
+    
+    def save_guess(self, image: str, guess: str):
+        guess_file = SURVEY_GUESSES_PATH+f"\\{self.survey_participant}.json"
+        guesses = self.get_guesses()
+        guesses[image] = guess
         with open(guess_file, "w") as f:
             json.dump(guesses, f, indent=4)
-        
-        # TODO UPDATE PROGRESS BAR
-        self.next_survey_image(1)
-        self.gui.image_guess_input_line.clear()
-
+        return 100 * len(guesses) // len(self.survey_images)
 
     def next_survey_image(self, step: int):
-        # TODO OUT OF RANGE ERROR
         self.current_survey_image += step
         if self.current_survey_image > len(self.survey_images):
             return
