@@ -1,11 +1,14 @@
-import sys, cv2, os, random, glob, json
-import time
+import sys, cv2, os, random, glob, json, re, collections
 import numpy as np
-from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtCore import QEvent, QObject, Qt
+
 from PIL import Image, ImageDraw, ImageFilter, ImageQt
 from typing import List, NamedTuple, Union
-import collections
+
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtCore import QEvent, QObject, Qt
+# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+# from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+# from matplotlib.figure import Figure
 
 from gen.main_window import Ui_main_window
 from gen.survey_dialog import Ui_survey_dialog
@@ -125,7 +128,14 @@ class Window(QtWidgets.QMainWindow):
         self.gui = Ui_main_window()
         self.gui.setupUi(self)
         self.current_tab = 0
-        self.canvas = Canvas()        
+        self.canvas = Canvas()       
+
+        # AI PREDICT
+        # self.load_models(blacklist=["test_plot"]) 
+        self.load_models(blacklist=[])
+
+        # AI TRAIN
+        self.model_to_train = None
 
         # SURVEY STUFF
         self.survey_participant = "karl"
@@ -137,13 +147,8 @@ class Window(QtWidgets.QMainWindow):
                               self.survey_images[self.current_survey_image])
         self.gui.images_left_progress_bar.setValue(0)
 
+        # ADD SURVEY SAMPLES
         self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
-
-        self.load_models(blacklist=["test_plot"])
-
-    @property
-    def selected_model(self):
-        return "test_adam"  # fixa så man kan välja modell i combobox. modelerna finns som strings i self.models.keys()
 
     def eventFilter(self, source: QObject, event: QEvent):
         EventHandler.trigger(self, source, event)
@@ -168,11 +173,16 @@ class Window(QtWidgets.QMainWindow):
 
     #region -x-x-x-x-x-x-x-x-x- Tab : AI Predict -x-x-x-x-x-x-x-x-x-
 
+    @property
+    def selected_model(self):
+        return self.gui.model_selector.currentText()
+
+    @EventHandler.on(QEvent.InputMethodQuery, from_widgets=["model_selector"])
     @EventHandler.on(QEvent.MouseButtonRelease, from_widgets=["predict_canvas_label"], 
                      mbuttons=[Qt.MouseButton.LeftButton])
     def display_prediction(self, source: QObject, event: QEvent):
         guesses = self.get_prediction(self.selected_model)
-        fomatted_guesses = [f"{p[0]}:{p[1]*100:.0f}%" for p in guesses] # är det möjligt att göra lådan lite lite bredare så det inte behövs en vertical scroll?
+        fomatted_guesses = [f"{p[0]}:{p[1]*100:.0f}%" for p in guesses]
         self.gui.prediction_probability_list.clear()
         self.gui.prediction_probability_list.addItems(fomatted_guesses)
 
@@ -192,6 +202,8 @@ class Window(QtWidgets.QMainWindow):
                 model = sample.Model(name=model_name)
                 network = sample.Network(model=model)
                 self.models[model_name] = data(network, model)
+        self.gui.model_selector.clear()
+        self.gui.model_selector.addItems(self.models.keys())
 
     def get_prediction(self, model_name: str, standardize=True) -> list[tuple[str, int]]:
         """
@@ -219,7 +231,35 @@ class Window(QtWidgets.QMainWindow):
 
     #region -x-x-x-x-x-x-x-x-x- Tab : AI Train -x-x-x-x-x-x-x-x-x-
 
-    def train_ai(self, callbacks: dict, dataset_options: dict) -> None:
+    @EventHandler.onclick("configure_training_button")
+    def select_training_config(self, source: QObject, event: QEvent):
+        f = QtWidgets.QFileDialog.getOpenFileName(self)[0]
+        model_name = re.search("[A-z]+(?=\/config\.json)", f)
+        if model_name:
+            self.model_to_train = model_name.group()
+
+    @EventHandler.onclick("toggle_training_button")
+    def toggle_training(self, source: QObject, event: QEvent):
+        if not self.model_to_train:
+            # TODO ADD WARNING IF REQUIREMENT NOT MET
+            return
+        if self.gui.toggle_training_button.text() == "Start":
+            options = {
+                "image_size": (28, 28),
+                "subtract_label": True
+            }
+            self.train_ai(self.plot_training, options)
+            self.gui.toggle_training_button.setText("Stop")
+        else:
+            # self.gui.toggle_training_button.setText("Start")
+            pass
+
+    def plot_training(self, summary: collections.namedtuple):
+        t = summary.epoch
+        
+        self.gui.plot_canvas.plot(epochs=summary.epoch, loss=summary.loss)
+        
+    def train_ai(self, callback: callable, dataset_options: dict) -> None:
         """
         Trains the selected ai.
 
@@ -235,7 +275,7 @@ class Window(QtWidgets.QMainWindow):
                 "image_size": tuple[int, int] must be included
 
         """
-        ai = self.models[self.selected_model]
+        ai = self.models[self.model_to_train]
         assert "image_size" in dataset_options, "image_size must be included in dataset_options"
 
         dataset = sample.CompiledDataset(
@@ -244,10 +284,10 @@ class Window(QtWidgets.QMainWindow):
             **dataset_options
         )
 
-        sample.train.train(
+        sample.train(
             network=ai.network,
             dataset=dataset,
-            **callbacks
+            callback_training=callback
         )
 
     #endregion
@@ -405,7 +445,6 @@ class SurveyDialog(QtWidgets.QDialog):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = Window()
-    win.load_models()
     win.show()
     app.installEventFilter(win)
     sys.exit(app.exec())
