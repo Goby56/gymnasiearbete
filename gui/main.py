@@ -162,7 +162,7 @@ class Window(QtWidgets.QMainWindow):
         
         self.loss_ax = self.graph.add_subplot(111)
         self.loss_ax.set_ylabel("loss")
-        self.loss_ax.set_xlabel("Steps")
+        self.loss_ax.set_xlabel("steps")
         self.loss_line, = self.loss_ax.plot(self.t, self.loss, label="loss", color="blue")
         self.loss_ax.set_ylim([0,5])
 
@@ -370,7 +370,7 @@ class Window(QtWidgets.QMainWindow):
 
         epoch, excess = self.get_epoch_progress()
 
-        self.loss_ax.set_title(f"Epoch {epoch+excess/100:.2f}")
+        self.loss_ax.set_title(f"epoch {epoch+excess/100:.2f}")
         self.refresh_graph()
 
         self.training_summary = summary
