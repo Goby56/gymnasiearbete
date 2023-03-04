@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QGraphicsView, QHBoxLayout,
-    QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QMainWindow, QProgressBar, QPushButton, QSizePolicy,
-    QSpacerItem, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
+    QProgressBar, QPushButton, QSizePolicy, QSpacerItem,
+    QTabWidget, QVBoxLayout, QWidget)
 
 class Ui_main_window(object):
     def setupUi(self, main_window):
@@ -101,23 +101,34 @@ class Ui_main_window(object):
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.toggle_graph_toolbar = QPushButton(self.train_tab)
+        self.toggle_graph_toolbar.setObjectName(u"toggle_graph_toolbar")
+        self.toggle_graph_toolbar.setMaximumSize(QSize(25, 16777215))
+
+        self.horizontalLayout_4.addWidget(self.toggle_graph_toolbar)
+
         self.configure_training_button = QPushButton(self.train_tab)
         self.configure_training_button.setObjectName(u"configure_training_button")
 
         self.horizontalLayout_4.addWidget(self.configure_training_button)
 
-        self.toggle_training_button = QPushButton(self.train_tab)
-        self.toggle_training_button.setObjectName(u"toggle_training_button")
+        self.horizontalLayout_5 = QHBoxLayout()
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.start_stop_training_button = QPushButton(self.train_tab)
+        self.start_stop_training_button.setObjectName(u"start_stop_training_button")
 
-        self.horizontalLayout_4.addWidget(self.toggle_training_button)
+        self.horizontalLayout_5.addWidget(self.start_stop_training_button)
+
+        self.pause_resume_training_button = QPushButton(self.train_tab)
+        self.pause_resume_training_button.setObjectName(u"pause_resume_training_button")
+
+        self.horizontalLayout_5.addWidget(self.pause_resume_training_button)
+
+
+        self.horizontalLayout_4.addLayout(self.horizontalLayout_5)
 
 
         self.verticalLayout_5.addLayout(self.horizontalLayout_4)
-
-        self.plot_canvas = QGraphicsView(self.train_tab)
-        self.plot_canvas.setObjectName(u"plot_canvas")
-
-        self.verticalLayout_5.addWidget(self.plot_canvas)
 
         self.mode_selector_tab.addTab(self.train_tab, "")
         self.guess_tab = QWidget()
@@ -238,8 +249,10 @@ class Ui_main_window(object):
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.predict_tab), QCoreApplication.translate("main_window", u"Draw an image and let the AI guess", None))
 #endif // QT_CONFIG(tooltip)
+        self.toggle_graph_toolbar.setText(QCoreApplication.translate("main_window", u"\u25bc", None))
         self.configure_training_button.setText(QCoreApplication.translate("main_window", u"Configure", None))
-        self.toggle_training_button.setText(QCoreApplication.translate("main_window", u"Start", None))
+        self.start_stop_training_button.setText(QCoreApplication.translate("main_window", u"Start", None))
+        self.pause_resume_training_button.setText(QCoreApplication.translate("main_window", u"Pause", None))
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("main_window", u"Train model", None))
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("main_window", u"Create and train a new or existing model", None))

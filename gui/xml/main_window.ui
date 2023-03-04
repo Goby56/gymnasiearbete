@@ -158,6 +158,19 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
+           <widget class="QPushButton" name="toggle_graph_toolbar">
+            <property name="maximumSize">
+             <size>
+              <width>25</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>▼</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="configure_training_button">
             <property name="text">
              <string>Configure</string>
@@ -165,16 +178,24 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="toggle_training_button">
-            <property name="text">
-             <string>Start</string>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QPushButton" name="start_stop_training_button">
+              <property name="text">
+               <string>Start</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pause_resume_training_button">
+              <property name="text">
+               <string>Pause</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QGraphicsView" name="plot_canvas"/>
         </item>
        </layout>
       </widget>

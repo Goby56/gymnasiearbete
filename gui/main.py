@@ -1,14 +1,16 @@
-import sys, cv2, os, random, glob, json, re, collections
+import sys, cv2, os, random, glob, json, re, collections, matplotlib, time
+import threading
 import numpy as np
 
 from PIL import Image, ImageDraw, ImageFilter, ImageQt
 from typing import List, NamedTuple, Union
 
 from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtWidgets import QMessageBox
 from PySide6.QtCore import QEvent, QObject, Qt
-# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-# from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-# from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
+from matplotlib.figure import Figure as MatplotFigure
 
 from gen.main_window import Ui_main_window
 from gen.survey_dialog import Ui_survey_dialog
@@ -17,10 +19,17 @@ sys.path.append(os.getcwd())
 SURVEY_IMAGES_PATH = os.path.join(os.getcwd(), "survey\\images")
 SURVEY_GUESSES_PATH = os.path.join(os.getcwd(), "survey\\guesses")
 MODELS_PATH = os.path.join(os.getcwd(), "data\\models")
+TRAINING_GRAPHS_PATH = os.path.join(os.getcwd(), "analysis\\results")
 
 SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 
 import sample
+
+class Session(NamedTuple):
+    count: int
+    epoch: int
+    excess: int
+    steps_per_epoch: int
 
 class Event(NamedTuple):
     callback: callable
@@ -136,6 +145,35 @@ class Window(QtWidgets.QMainWindow):
 
         # AI TRAIN
         self.model_to_train = None
+        self.training_state = "" # can be continue, pause or stop
+
+        self.graph = MatplotFigure()
+        self.graph.set_tight_layout(True)
+        self.gui.plot_canvas = FigureCanvasQTAgg(self.graph)
+        self.gui.plot_toolbar = NavigationToolbar2QT(self.gui.plot_canvas)
+        self.gui.verticalLayout_5.addWidget(self.gui.plot_canvas)
+        self.gui.verticalLayout_5.addWidget(self.gui.plot_toolbar)
+        self.gui.pause_resume_training_button.hide()
+        self.gui.plot_toolbar.hide()
+
+        self.t = []
+        self.accuracy = []
+        self.loss = []
+        
+        self.loss_ax = self.graph.add_subplot(111)
+        self.loss_ax.set_ylabel("loss")
+        self.loss_ax.set_xlabel("Steps")
+        self.loss_line, = self.loss_ax.plot(self.t, self.loss, label="loss", color="blue")
+        self.loss_ax.set_ylim([0,5])
+
+        self.acc_ax = self.loss_ax.twinx()
+        self.acc_ax.set_ylabel("accuracy")
+        self.acc_line, = self.acc_ax.plot(self.t, self.accuracy, label="accuracy", color="orange")
+        self.acc_ax.set_ylim([0,1])
+
+        lines = [self.loss_line, self.acc_line]
+        labels = [l.get_label() for l in lines]
+        self.loss_ax.legend(lines, labels, loc="center right")
 
         # SURVEY STUFF
         self.survey_participant = "karl"
@@ -153,6 +191,16 @@ class Window(QtWidgets.QMainWindow):
     def eventFilter(self, source: QObject, event: QEvent):
         EventHandler.trigger(self, source, event)
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
+    
+    def show_dialog(self, icon: QMessageBox.Icon, title: str, text: str, info_text: str = None):
+        QtWidgets.QMessageBox.Icon.Warning
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(icon)
+        msg.setWindowTitle(title)
+        msg.setText(text)
+        if info_text != None:
+            msg.setInformativeText(info_text)
+        return msg.exec()
 
     @EventHandler.on(QEvent.Paint, from_widgets=["mode_selector_tab"])
     def update_tab_index(self, source: QObject, event: QEvent):
@@ -231,6 +279,15 @@ class Window(QtWidgets.QMainWindow):
 
     #region -x-x-x-x-x-x-x-x-x- Tab : AI Train -x-x-x-x-x-x-x-x-x-
 
+    @EventHandler.onclick("toggle_graph_toolbar")
+    def toggle_graph_toolbar(self, source: QObject, event: QEvent):
+        if self.gui.plot_toolbar.isHidden():
+            self.gui.plot_toolbar.show()
+            source.setText("▲")
+        else:
+            self.gui.plot_toolbar.hide()
+            source.setText("▼")
+
     @EventHandler.onclick("configure_training_button")
     def select_training_config(self, source: QObject, event: QEvent):
         f = QtWidgets.QFileDialog.getOpenFileName(self)[0]
@@ -238,26 +295,107 @@ class Window(QtWidgets.QMainWindow):
         if model_name:
             self.model_to_train = model_name.group()
 
-    @EventHandler.onclick("toggle_training_button")
-    def toggle_training(self, source: QObject, event: QEvent):
+    @EventHandler.onclick("start_stop_training_button")
+    def handle_training(self, source: QObject, event: QEvent):
         if not self.model_to_train:
-            # TODO ADD WARNING IF REQUIREMENT NOT MET
+            self.show_dialog(QMessageBox.Icon.Warning, "Error", "No module selected")
             return
-        if self.gui.toggle_training_button.text() == "Start":
+        if source.text() == "Start":
+            self.training_state = "continue"
             options = {
                 "image_size": (28, 28),
                 "subtract_label": True
             }
-            self.train_ai(self.plot_training, options)
-            self.gui.toggle_training_button.setText("Stop")
-        else:
-            # self.gui.toggle_training_button.setText("Start")
-            pass
+            self.training_thread = threading.Thread(target=self.train_ai, args=(self.plot_training, options))
+            self.training_thread.start()
+            source.setText("Stop")
+            self.gui.pause_resume_training_button.show()
+        elif source.text() == "Stop":
+            self.training_state = "stop"
+            self.gui.pause_resume_training_button.hide()
+            self.gui.pause_resume_training_button.setText("Pause")
+            
+            sess_count = self.session.count + 1
+            epoch, excess = self.get_epoch_progress()
+            fname = f"sess{sess_count}-ep{epoch}-{excess}%-({self.session.steps_per_epoch}).png"
+            path = TRAINING_GRAPHS_PATH+f"\\{self.model_to_train}\\{fname}"
+            self.graph.savefig(path)
+            self.reset_graph()
+            source.setText("Start")
 
-    def plot_training(self, summary: collections.namedtuple):
-        t = summary.epoch
+    @EventHandler.on(QEvent.Close)
+    def stop_training(self, source: QObject, event: QEvent):
+        self.training_state = "stop"
+
+    def get_epoch_progress(self):
+        epoch = self.session.epoch + self.training_summary.epoch - 1
+        excess = self.session.excess + int(100 * (self.training_summary.step+1) / self.session.steps_per_epoch)
+        epoch += excess // 100
+        excess %= 100
+        return epoch, excess
+
+    @EventHandler.onclick("pause_resume_training_button")
+    def toggle_training(self, source: QObject, event: QEvent):
+        if source.text() == "Pause":
+            self.training_state = "pause"
+            self.gui.pause_resume_training_button.setText("Resume")
+        elif source.text() == "Resume":
+            self.training_state = "continue"
+            self.gui.pause_resume_training_button.setText("Pause")
+
+    def get_previous_session(self, model_name: str, steps_per_epoch: int = None):
+        model_path = TRAINING_GRAPHS_PATH+f"\\{model_name}"
+        sessions = list(filter(lambda fname: re.search("sess[0-9]+-ep[0-9]+-[0-9]{1,2}%-\([0-9]+\)\.png", fname), 
+                          os.listdir(model_path)))
+        if len(sessions) < 1:
+            return Session(0, 0, 0, steps_per_epoch)
+        sessions.sort(key=(lambda s: int(re.search("(?<=sess)[0-9]+", s).group())))
+        prev_sess = sessions[-1]
+        count = len(sessions)
+        epoch = int(re.search("(?<=ep)[0-9]+", prev_sess).group())
+        excess = int(re.search("[0-9]+(?=%)", prev_sess).group())
+        steps_per_epoch = int(re.search("(?<=\()[0-9]+(?=\))", prev_sess).group())
+        return Session(count, epoch, excess, steps_per_epoch)
+
+    def plot_training(self, summary: Union[collections.namedtuple, None]):
+        if summary == None:
+            return self.training_state
         
-        self.gui.plot_canvas.plot(epochs=summary.epoch, loss=summary.loss)
+        self.t.append(summary.step)
+        self.loss.append(summary.loss)
+        self.accuracy.append(summary.accuracy)
+        self.update_graph_values()
+
+        self.training_summary = summary
+
+        epoch, excess = self.get_epoch_progress()
+
+        self.loss_ax.set_title(f"Epoch {epoch+excess/100:.2f}")
+        self.refresh_graph()
+
+        self.training_summary = summary
+
+        return self.training_state
+    
+    def refresh_graph(self):
+        self.loss_ax.relim()
+        self.loss_ax.autoscale_view()
+        self.acc_ax.autoscale_view()
+
+        self.gui.plot_canvas.draw()
+        self.gui.plot_canvas.flush_events()
+    
+    def update_graph_values(self):
+        self.loss_line.set_data(self.t, self.loss)
+        self.acc_line.set_data(self.t, self.accuracy)
+
+    def reset_graph(self):
+        self.t.clear()
+        self.loss.clear()
+        self.accuracy.clear()
+        self.update_graph_values()
+
+        self.refresh_graph()
         
     def train_ai(self, callback: callable, dataset_options: dict) -> None:
         """
@@ -283,6 +421,9 @@ class Window(QtWidgets.QMainWindow):
             data_augmentation=ai.model.data_augmentation,
             **dataset_options
         )
+
+        steps_per_epoch = (dataset.training_len // ai.model.batch_size) + (dataset.training_len % ai.model.batch_size != 0)
+        self.session = self.get_previous_session(self.model_to_train, steps_per_epoch)
 
         sample.train(
             network=ai.network,
