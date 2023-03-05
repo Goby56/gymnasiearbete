@@ -173,7 +173,7 @@
           <item>
            <widget class="QPushButton" name="configure_training_button">
             <property name="text">
-             <string>Configure</string>
+             <string>Choose model</string>
             </property>
            </widget>
           </item>

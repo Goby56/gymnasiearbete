@@ -250,7 +250,7 @@ class Ui_main_window(object):
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.predict_tab), QCoreApplication.translate("main_window", u"Draw an image and let the AI guess", None))
 #endif // QT_CONFIG(tooltip)
         self.toggle_graph_toolbar.setText(QCoreApplication.translate("main_window", u"\u25bc", None))
-        self.configure_training_button.setText(QCoreApplication.translate("main_window", u"Configure", None))
+        self.configure_training_button.setText(QCoreApplication.translate("main_window", u"Choose model", None))
         self.start_stop_training_button.setText(QCoreApplication.translate("main_window", u"Start", None))
         self.pause_resume_training_button.setText(QCoreApplication.translate("main_window", u"Pause", None))
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("main_window", u"Train model", None))

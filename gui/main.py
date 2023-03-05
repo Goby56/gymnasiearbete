@@ -178,7 +178,7 @@ class Window(QtWidgets.QMainWindow):
 
         lines = [self.loss_line, self.acc_line, self.test_acc_line]
         labels = [l.get_label() for l in lines]
-        self.loss_ax.legend(lines, labels, loc="center right")
+        self.loss_ax.legend(lines, labels, loc="center left")
 
         # SURVEY STUFF
         self.survey_participant = "karl"
@@ -293,7 +293,7 @@ class Window(QtWidgets.QMainWindow):
 
     @EventHandler.onclick("configure_training_button")
     def select_training_config(self, source: QObject, event: QEvent):
-        f = QtWidgets.QFileDialog.getOpenFileName(self)[0]
+        f = QtWidgets.QFileDialog.getOpenFileName(self, dir=MODELS_PATH)[0]
         model_name = re.search("[A-z]+(?=\/config\.json)", f)
         if model_name:
             self.model_to_train = model_name.group()
