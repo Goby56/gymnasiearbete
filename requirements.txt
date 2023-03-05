@@ -1,5 +1,6 @@
 numpy
 scipy
-PIL
+Pillow
 matplotlib
-pyside6
+PySide6
+opencv-python
