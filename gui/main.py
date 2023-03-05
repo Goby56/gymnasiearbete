@@ -181,7 +181,7 @@ class Window(QtWidgets.QMainWindow):
         self.loss_ax.legend(lines, labels, loc="center left")
 
         # SURVEY STUFF
-        self.survey_participant = "karl"
+        self.survey_participant = "william"
         self.survey_images = self.load_images(SURVEY_IMAGES_PATH)
         random.seed(69)
         random.shuffle(self.survey_images)
@@ -515,26 +515,7 @@ class Window(QtWidgets.QMainWindow):
             pil_img.filename = pil_img.filename.split("\\")[-1]
             images.append(pil_img)
         return images
-
-    @staticmethod
-    def save_emnist_images(amount: int):
-        """
-        Only used to load and save emnist images to be used in the survey.
-        """
-        dataset = sample.CompiledDataset(filename="emnist-balanced.mat", image_size=(28, 28))
-        samples = dataset.get(amount, convert=True)
-        occurences = {}
-        for i in range(amount):
-            label = samples[i][1]
-            if label in occurences:
-                occurences[label] += 1
-            else:
-                occurences[label] = 0            
-            pil_img = Image.fromarray(samples[i][0]).convert("RGB")
-            fn = f"emnist_{samples[i][1]}({occurences[label]}).png"
-            path = SURVEY_IMAGES_PATH+f"\\{fn}"
-            pil_img.save(path)
-         
+    
     #endregion
     
     #region -x-x-x-x-x-x-x-x-x- Tab : Survey Draw -x-x-x-x-x-x-x-x-x-
