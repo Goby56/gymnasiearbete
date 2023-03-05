@@ -1,6 +1,7 @@
 import sys, cv2, os, random, glob, json, re, collections, matplotlib, time
 import threading
 import numpy as np
+from scipy.interpolate import BPoly
 
 from PIL import Image, ImageDraw, ImageFilter, ImageQt
 from typing import List, NamedTuple, Union
@@ -24,6 +25,7 @@ TRAINING_GRAPHS_PATH = os.path.join(os.getcwd(), "analysis\\results")
 SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 
 import sample
+from sample.train import Summary
 
 class Session(NamedTuple):
     count: int
@@ -157,21 +159,24 @@ class Window(QtWidgets.QMainWindow):
         self.gui.plot_toolbar.hide()
 
         self.t = []
-        self.accuracy = []
         self.loss = []
+        self.accuracy = []
+        self.test_acc = []
+        self.test_steps = []
         
         self.loss_ax = self.graph.add_subplot(111)
         self.loss_ax.set_ylabel("loss")
         self.loss_ax.set_xlabel("steps")
-        self.loss_line, = self.loss_ax.plot(self.t, self.loss, label="loss", color="blue")
         self.loss_ax.set_ylim([0,5])
-
         self.acc_ax = self.loss_ax.twinx()
         self.acc_ax.set_ylabel("accuracy")
-        self.acc_line, = self.acc_ax.plot(self.t, self.accuracy, label="accuracy", color="orange")
         self.acc_ax.set_ylim([0,1])
 
-        lines = [self.loss_line, self.acc_line]
+        self.loss_line, = self.loss_ax.plot(self.t, self.loss, label="loss", color="blue")
+        self.acc_line, = self.acc_ax.plot(self.t, self.accuracy, label="accuracy", color="orange")
+        self.test_acc_line, = self.acc_ax.plot(self.t, self.test_acc, label="test_accuracy", color="red")
+
+        lines = [self.loss_line, self.acc_line, self.test_acc_line]
         labels = [l.get_label() for l in lines]
         self.loss_ax.legend(lines, labels, loc="center right")
 
@@ -314,25 +319,28 @@ class Window(QtWidgets.QMainWindow):
             self.training_state = "stop"
             self.gui.pause_resume_training_button.hide()
             self.gui.pause_resume_training_button.setText("Pause")
-            
-            sess_count = self.session.count + 1
-            epoch, excess = self.get_epoch_progress()
-            fname = f"sess{sess_count}-ep{epoch}-{excess}%-({self.session.steps_per_epoch}).png"
-            path = TRAINING_GRAPHS_PATH+f"\\{self.model_to_train}\\{fname}"
-            self.graph.savefig(path)
-            self.reset_graph()
             source.setText("Start")
+            self.smooth_test_acc()
+            self.save_graph()
+            self.reset_graph()
 
     @EventHandler.on(QEvent.Close)
     def stop_training(self, source: QObject, event: QEvent):
         self.training_state = "stop"
 
-    def get_epoch_progress(self):
-        epoch = self.session.epoch + self.training_summary.epoch - 1
-        excess = self.session.excess + int(100 * (self.training_summary.step+1) / self.session.steps_per_epoch)
-        epoch += excess // 100
-        excess %= 100
-        return epoch, excess
+    def save_graph(self):
+        model_path = TRAINING_GRAPHS_PATH+f"\\{self.model_to_train}"
+        sessions = list(filter(lambda fname: re.search("[0-9]+(-[0-9]+\.[0-9]{1,2}){3}(?=\.png$)", fname), 
+                               os.listdir(model_path)))
+        
+        epoch = self.prev_summary.epoch + self.prev_summary.step / self.prev_summary.steps_per_epoch
+        acc = self.accuracy[-1]
+        tacc = self.test_acc[-1]
+        fname = f"{len(sessions)+1}-{epoch:.2f}-{acc:.2f}-{tacc:.2f}.png"
+        path = TRAINING_GRAPHS_PATH+f"\\{self.model_to_train}\\{fname}"
+
+        self.loss_ax.set_title(f"epoch {epoch:.2f}")
+        self.graph.savefig(path)
 
     @EventHandler.onclick("pause_resume_training_button")
     def toggle_training(self, source: QObject, event: QEvent):
@@ -342,38 +350,31 @@ class Window(QtWidgets.QMainWindow):
         elif source.text() == "Resume":
             self.training_state = "continue"
             self.gui.pause_resume_training_button.setText("Pause")
+    
+    def get_training_speed(self, summary: Summary):
+        itps = 1 / (summary.timestamp - self.prev_summary.timestamp) # it/s
+        self.prev_summary = summary
+        return itps
 
-    def get_previous_session(self, model_name: str, steps_per_epoch: int = None):
-        model_path = TRAINING_GRAPHS_PATH+f"\\{model_name}"
-        sessions = list(filter(lambda fname: re.search("sess[0-9]+-ep[0-9]+-[0-9]{1,2}%-\([0-9]+\)\.png", fname), 
-                          os.listdir(model_path)))
-        if len(sessions) < 1:
-            return Session(0, 0, 0, steps_per_epoch)
-        sessions.sort(key=(lambda s: int(re.search("(?<=sess)[0-9]+", s).group())))
-        prev_sess = sessions[-1]
-        count = len(sessions)
-        epoch = int(re.search("(?<=ep)[0-9]+", prev_sess).group())
-        excess = int(re.search("[0-9]+(?=%)", prev_sess).group())
-        steps_per_epoch = int(re.search("(?<=\()[0-9]+(?=\))", prev_sess).group())
-        return Session(count, epoch, excess, steps_per_epoch)
-
-    def plot_training(self, summary: Union[collections.namedtuple, None]):
+    def plot_training(self, summary: Summary = None):
         if summary == None:
             return self.training_state
         
-        self.t.append(summary.step)
+        accumulated_step = summary.step + summary.epoch * summary.steps_per_epoch
+        self.t.append(accumulated_step)
         self.loss.append(summary.loss)
-        self.accuracy.append(summary.accuracy)
+        self.accuracy.append(summary.training_accuracy)
+        if summary.test_accuracy != None:
+            self.test_acc.append(summary.test_accuracy)
+            self.test_steps.append(accumulated_step)
         self.update_graph_values()
 
-        self.training_summary = summary
+        epoch = summary.epoch + summary.step / summary.steps_per_epoch
+        speed = self.get_training_speed(summary)
+        del summary
 
-        epoch, excess = self.get_epoch_progress()
-
-        self.loss_ax.set_title(f"epoch {epoch+excess/100:.2f}")
+        self.loss_ax.set_title(f"epoch {epoch:.2f} {speed:.2f} it/s")
         self.refresh_graph()
-
-        self.training_summary = summary
 
         return self.training_state
     
@@ -388,11 +389,22 @@ class Window(QtWidgets.QMainWindow):
     def update_graph_values(self):
         self.loss_line.set_data(self.t, self.loss)
         self.acc_line.set_data(self.t, self.accuracy)
+        self.test_acc_line.set_data(self.test_steps, self.test_acc)
+
+    def smooth_test_acc(self):
+        # https://www.youtube.com/watch?v=EGsKO9Mye6c
+        c = np.c_[self.test_steps, self.test_acc][:,None,:]
+        spline = BPoly(c, [0, 1])
+        x = np.linspace(0, 1, len(self.t))
+        points = spline(x)
+        self.test_acc_line.set_data(points[:,0], points[:,1])
+        self.refresh_graph()
 
     def reset_graph(self):
         self.t.clear()
         self.loss.clear()
         self.accuracy.clear()
+        self.test_acc.clear()
         self.update_graph_values()
 
         self.refresh_graph()
@@ -423,7 +435,7 @@ class Window(QtWidgets.QMainWindow):
         )
 
         steps_per_epoch = (dataset.training_len // ai.model.batch_size) + (dataset.training_len % ai.model.batch_size != 0)
-        self.session = self.get_previous_session(self.model_to_train, steps_per_epoch)
+        self.prev_summary = Summary(0, 0, 0, 0, 0, steps_per_epoch, time.time())
 
         sample.train(
             network=ai.network,

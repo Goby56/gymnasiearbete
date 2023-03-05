@@ -91,6 +91,7 @@ class CompiledDataset:
         self.__new_test_data = lambda: self.__sample_gen("test", slice(0, partition_len))
 
         self.training_data = self.__new_training_data()
+        self.test_data = self.__new_test_data()
         self.validation_data = self.__new_validation_data()
 
         self.training_len = training_len - partition_len*self.validation_partition
@@ -142,8 +143,14 @@ class CompiledDataset:
                 break
             yield sample
 
-    def get_test_data(self):
-        return self.__new_test_data()
+    def next_test_batch(self, batch_size: int):
+        for _ in range(batch_size):
+            sample = next(self.test_data, None)
+            if sample is None:
+                self.test_data = self.__new_test_data()
+                next(self.test_data)
+                break
+            yield sample
 
     def convert_image(self, flat_array: np.ndarray) -> np.ndarray:
         """

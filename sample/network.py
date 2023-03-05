@@ -59,6 +59,12 @@ class Network:
         self.backward(guesses, labels)
 
         return loss, accuracy
+    
+    def test(self, data_points):
+        samples, labels = map(np.asarray, zip(*data_points))
+        guesses = self.forward(samples)
+        accuracy = self.model.accuracy_function.calculate(guesses, labels)
+        return accuracy
 
     def save(self):
         w, b = zip(*[(i.weights, i.biases) for i in self.layers])
