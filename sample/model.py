@@ -1,11 +1,8 @@
 import os, json
 
-try:
-    from . import functions
-    from .model_file_formatter import file_reader, str_writer
-except ImportError:
-    import functions
-    from model_file_formatter import file_reader, str_writer
+from . import functions
+from .model_file_formatter import file_reader, str_writer
+from .data import CompiledDataset
 
 _MODEL_FOLDER = os.path.join(os.path.dirname( __file__ ), "..", "data\\models")
 
@@ -68,12 +65,7 @@ class Model(dict):
         in_, *_, out_ = self.structure["nodes"]
         self.shape = (in_, out_)
 
-    @property
-    def has_mapping(self):
-        try:
-            return hasattr(self, "mapping")
-        except MissingConfigAttribute:
-            return False
+        self.mapping = CompiledDataset.get_mapping(self.dataset)
 
     def __getattr__(self, attr):
         return self[attr]

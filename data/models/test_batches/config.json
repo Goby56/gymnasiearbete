@@ -1,10 +1,9 @@
 {
     "setup": {
         "structure": {
-            "nodes": [784, 128, 128, 26],
+            "nodes": [784, 128, 128, 47],
             "activations": ["ReLU", "ReLU", "Softmax"]
-        },
-        "mapping": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+        }
     },
 
     "training": {

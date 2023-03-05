@@ -1,10 +1,9 @@
 import numpy as np
 import itertools
 
-try:
-    from . import model, layer, utils, data
-except ImportError:
-    import model, layer, utils, data
+
+from . import model, layer
+
 
 # TODO: Move standardization from dataset to network. option has been added to config.
 class Network:
@@ -17,7 +16,7 @@ class Network:
         else:
             # Initialize weights and biases
             weights = list(map(self.init_weights,
-                utils.pairwise(self.model.structure["nodes"])))
+                itertools.pairwise(self.model.structure["nodes"])))
             biases = list(map(self.init_biases, 
                 self.model.structure["nodes"][1:]))
 

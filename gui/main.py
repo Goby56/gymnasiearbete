@@ -20,7 +20,7 @@ sys.path.append(os.getcwd())
 SURVEY_IMAGES_PATH = os.path.join(os.getcwd(), "survey\\images")
 SURVEY_GUESSES_PATH = os.path.join(os.getcwd(), "survey\\guesses")
 MODELS_PATH = os.path.join(os.getcwd(), "data\\models")
-TRAINING_GRAPHS_PATH = os.path.join(os.getcwd(), "analysis\\results")
+TRAINING_GRAPHS_PATH = os.path.join(os.getcwd(), "analysis")
 
 SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 
@@ -258,7 +258,7 @@ class Window(QtWidgets.QMainWindow):
         self.gui.model_selector.clear()
         self.gui.model_selector.addItems(self.models.keys())
 
-    def get_prediction(self, model_name: str, standardize=True) -> list[tuple[str, int]]:
+    def get_prediction(self, model_name: str, standardize=False) -> list[tuple[str, int]]:
         """
         Does a forward pass with the given model and return a sorted list of probabilities.
 
@@ -275,10 +275,8 @@ class Window(QtWidgets.QMainWindow):
         in_vec.shape = (1, len(in_vec))
         #in_vec = sample.CompiledDataset.standardize_image(in_vec) if standardize else in_vec / 255
         out_vec = ai.network.forward(in_vec).flatten()
-        if ai.model.has_mapping:
-            guess = list(zip(ai.model.mapping, out_vec))
-            return sorted(guess, key=lambda x: x[1], reverse=True)
-        return [("N/A", i) for i in sorted(out_vec, reverse=True)]
+        guess = list(zip(ai.model.mapping, out_vec))
+        return sorted(guess, key=lambda x: x[1], reverse=True)
 
     #endregion
 
@@ -307,10 +305,7 @@ class Window(QtWidgets.QMainWindow):
             return
         if source.text() == "Start":
             self.training_state = "continue"
-            options = {
-                "image_size": (28, 28),
-                "subtract_label": True
-            }
+            options = {}
             self.training_thread = threading.Thread(target=self.train_ai, args=(self.plot_training, options))
             self.training_thread.start()
             source.setText("Stop")
@@ -330,6 +325,9 @@ class Window(QtWidgets.QMainWindow):
 
     def save_graph(self):
         model_path = TRAINING_GRAPHS_PATH+f"\\{self.model_to_train}"
+        if not os.path.exists(model_path):
+            os.mkdir(model_path)
+
         sessions = list(filter(lambda fname: re.search("[0-9]+(-[0-9]+\.[0-9]{1,2}){3}(?=\.png$)", fname), 
                                os.listdir(model_path)))
         
@@ -426,7 +424,6 @@ class Window(QtWidgets.QMainWindow):
 
         """
         ai = self.models[self.model_to_train]
-        assert "image_size" in dataset_options, "image_size must be included in dataset_options"
 
         dataset = sample.CompiledDataset(
             filename=ai.model.dataset,

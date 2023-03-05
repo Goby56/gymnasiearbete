@@ -5,7 +5,9 @@ from typing import Union
 from PIL import Image
 import random
 
-def convert_image(flat_array: np.ndarray, image_size: tuple[int, int], standardized=True) -> np.ndarray:
+IMAGE_SIZE = (28, 28)
+
+def convert_image(flat_array: np.ndarray, standardized=True) -> np.ndarray:
         """
         un-standardizes values if standardize=True
         Arguments:
@@ -13,7 +15,7 @@ def convert_image(flat_array: np.ndarray, image_size: tuple[int, int], standardi
         Returns:
             np.ndarray --- a np.ndarray with shape image_size
         """
-        new_array = flat_array.reshape(image_size)
+        new_array = flat_array.reshape(IMAGE_SIZE)
         if standardized:
             # Remap values to 0 - 255
             new_array = np.interp(new_array, (new_array.min(), new_array.max()), (0, 255)) 
@@ -51,7 +53,6 @@ class CompiledDataset:
 
     def __init__(self, *,
         filename: str,
-        image_size: tuple[int, int],
         validation_partition = True,
         standardize = True,
         data_augmentation: dict = {},
@@ -65,7 +66,6 @@ class CompiledDataset:
         self.__data = loadmat(filepath, simplify_cells = True)["dataset"]
         self.__subtract_label = subtract_label
 
-        self.image_size = image_size
         self.validation_partition = validation_partition
         self.is_standardized = standardize
 
@@ -76,6 +76,13 @@ class CompiledDataset:
 
         self.__load_generators()
         self.shape = tuple(map(len, next(self.next_batch(1))))
+
+    @classmethod
+    def get_mapping(cls, dataset: str):
+        filepath = os.path.join(cls.__data_dir, "EMNIST", dataset)
+        data = loadmat(filepath, simplify_cells = True)["dataset"]
+        mapping = data["mapping"][:, 1].flatten()
+        return np.vectorize(chr)(mapping)
 
     #region private shit
     def __load_generators(self):
@@ -101,7 +108,7 @@ class CompiledDataset:
         assert target in ["train", "test"], "arg. target not of type 'train', 'test' or 'validation'"
         targeted_data = self.__data[target]
         for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
-            image = np.flip(np.rot90(np.reshape(image, self.image_size), -1), -1)
+            image = np.flip(np.rot90(np.reshape(image, IMAGE_SIZE), -1), -1)
 
             if any(self.augmentations.values()):
                 if self.augmentations["rotate"]:
@@ -160,7 +167,7 @@ class CompiledDataset:
         Returns:
             np.ndarray --- a np.ndarray with shape image_size
         """
-        return convert_image(flat_array, self.image_size, standardized=self.is_standardized)
+        return convert_image(flat_array, standardized=self.is_standardized)
 
     def convert_label(self, hot_vector: np.ndarray) -> str:
         """

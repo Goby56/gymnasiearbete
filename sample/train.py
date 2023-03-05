@@ -21,15 +21,13 @@ def train(
         callback_epoch: Optional[Callable] = None
     ) -> None:
     model = network.model
-    assert dataset.shape == model.shape
+    assert dataset.shape == model.shape, "Node layout doesn't match with training data."
 
     training_steps = (dataset.training_len // model.batch_size) + (dataset.training_len % model.batch_size != 0)
     validation_steps = (dataset.validation_len // model.batch_size) + (dataset.validation_len % model.batch_size != 0)
 
     epoch = 0
-    while True:
-        if epoch == model.epochs:
-            break
+    while epoch != model.epochs:
 
         for step in range(training_steps):
             batch = dataset.next_batch(model.batch_size)
