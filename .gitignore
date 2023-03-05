@@ -4,3 +4,4 @@ analysis/__pycache__
 gui/__pycache__
 gui/gen/__pycache__
 tests/__pycache__
+venv
