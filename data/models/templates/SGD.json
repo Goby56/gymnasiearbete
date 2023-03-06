@@ -24,9 +24,7 @@
         "data_augmentation": {
             "noise": false,
             "shift": false,
-            "rotate": false,
-            "scale": false,
-            "blur": false
+            "rotate": false
         }
     }
 }
