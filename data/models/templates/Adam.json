@@ -21,7 +21,7 @@
         },
 
         "dataset": "emnist-balanced.mat",
-        "batch_size": 128,
+        "batch_size": 256,
         "epochs": -1,
         
         "data_augmentation": {
