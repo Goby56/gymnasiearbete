@@ -8,16 +8,13 @@ import sample
 
 options = {
     "noise": True,
-    "shift": False, # no
-    "rotate": True,
-    "scale": False, # no
-    "blur": False # no
+    "shift": True,
+    "rotate": True
 }
 
 dataset = sample.CompiledDataset(
     filename="emnist-balanced.mat",
-    image_size=(28, 28),
-    #data_augmentation=options,
+    data_augmentation=options,
     standardize=True
 )
 
@@ -62,6 +59,15 @@ def augment_data(arr, options):
 
     return to_array(new_img)
 
+def shift(image):
+    array = np.asarray(image)
+    for i in range(28):
+        if np.any(array[:,i]) or np.any(array[:,27-i]):
+            break
+    return np.roll(array, random.randint(-i, i))
+    
+    
+
 # img = load_img()
 # arr = augment_data(img, options)
 # new_img = to_image(arr)
@@ -75,13 +81,11 @@ def augment_data(arr, options):
 # to_image(img[0]).show()
 # print(img[1])
 
-for _ in dataset.next_batch(random.randint(1, 10000)): pass
+image, label = dataset.get(1, convert=True)
 
-image, label = dataset.get(1)
-image = dataset.convert_image(image)
-label = dataset.convert_label(label)
 Image.fromarray(image).show()
-print(label)
+
+
 
 
 

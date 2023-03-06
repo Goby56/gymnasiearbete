@@ -69,7 +69,11 @@ class CompiledDataset:
         self.validation_partition = validation_partition
         self.is_standardized = standardize
 
-        self.augmentations = data_augmentation
+        self.augmentations = {
+            "rotate": False, 
+            "noise": False,
+            "shift": False
+        } | data_augmentation
 
         mapping = self.__data["mapping"][:, 1].flatten()
         self.labels = np.vectorize(chr)(mapping)
@@ -110,14 +114,22 @@ class CompiledDataset:
         for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
             image = np.flip(np.rot90(np.reshape(image, IMAGE_SIZE), -1), -1)
 
-            if any(self.augmentations.values()):
-                if self.augmentations["rotate"]:
-                    new_img = Image.fromarray(image, "L")
-                    new_img = new_img.rotate(random.randint(-30, 30), resample=Image.BICUBIC)
-                    image = np.asarray(new_img)
-                if self.augmentations["noise"]:
-                    new_img = (image + np.random.random(image.shape) * 255 * 0.5).astype(int)
-                    image = np.clip(new_img, 0, 255)
+            if self.augmentations["rotate"]:
+                new_img = Image.fromarray(image, "L")
+                new_img = new_img.rotate(random.randint(-30, 30), resample=Image.BICUBIC)
+                image = np.asarray(new_img)
+
+            if self.augmentations["shift"]:
+                array = np.asarray(image)
+                for i in range(28):
+                    if np.any(array[:,i]) or np.any(array[:,27-i]):
+                        break
+                image = np.roll(array, random.randint(-i, i))
+
+            if self.augmentations["noise"]:
+                new_img = (image + np.random.random(image.shape) * 255 * 0.5).astype(int)
+                image = np.clip(new_img, 0, 255)
+            
 
             image=image.flatten()
 
