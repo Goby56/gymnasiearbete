@@ -186,6 +186,11 @@ class Ui_main_window(object):
 
         self.verticalLayout_3.addWidget(self.images_left_progress_bar)
 
+        self.survey_performance_label = QLabel(self.guess_tab)
+        self.survey_performance_label.setObjectName(u"survey_performance_label")
+
+        self.verticalLayout_3.addWidget(self.survey_performance_label)
+
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout_3.addItem(self.verticalSpacer)
@@ -268,6 +273,7 @@ class Ui_main_window(object):
         self.image_guess_input_line.setPlaceholderText(QCoreApplication.translate("main_window", u"?", None))
         self.next_image_button.setText(QCoreApplication.translate("main_window", u"Next Image", None))
         self.previous_image_button.setText(QCoreApplication.translate("main_window", u"Previous Image", None))
+        self.survey_performance_label.setText("")
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.guess_tab), QCoreApplication.translate("main_window", u"Survey", None))
         self.draw_canvas_label.setText("")
         self.survey_add_config_button.setText(QCoreApplication.translate("main_window", u"Configure", None))

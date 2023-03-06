@@ -29,7 +29,6 @@ def is_wrong_guess(correct: str, guess: str):
         return False
     return True
 
-
 wrong_guesses = [g for g in guesses if is_wrong_guess(g.ans, g.guess)]
 
 accuracy = 1-len(wrong_guesses)/len(guesses)
@@ -53,6 +52,7 @@ for i, g in enumerate(wrong_guesses):
     draw.text((0,upscaling*14), g.ans, "green", font)
     
     wrong_sheet.paste(img, (upscaling*28*i, 0))
+
 
 occurences = {v: k for k, v in occurences.items()}
 

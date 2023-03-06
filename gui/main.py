@@ -174,7 +174,7 @@ class Window(QtWidgets.QMainWindow):
 
         self.loss_line, = self.loss_ax.plot(self.t, self.loss, label="loss", color="blue")
         self.acc_line, = self.acc_ax.plot(self.t, self.accuracy, label="accuracy", color="orange")
-        self.test_acc_line, = self.acc_ax.plot(self.t, self.test_acc, label="test_accuracy", color="red")
+        self.test_acc_line, = self.acc_ax.plot(self.t, self.test_acc, label="test_accuracy", color="green")
 
         lines = [self.loss_line, self.acc_line, self.test_acc_line]
         labels = [l.get_label() for l in lines]
@@ -467,6 +467,9 @@ class Window(QtWidgets.QMainWindow):
         guess = self.gui.image_guess_input_line.text()
         if not guess:
             return
+        if len(self.get_guesses()) == 200:
+            return
+        
         img = self.survey_images[self.current_survey_image].filename
         
         percentage = self.save_guess(img, guess)
@@ -476,7 +479,7 @@ class Window(QtWidgets.QMainWindow):
 
     def update_survey_guess_field(self):
         guesses = self.get_guesses()
-        img = self.survey_images[self.current_survey_image].filename
+        img = self.survey_images[self.current_survey_image % 200].filename
         if img in guesses:
             self.gui.image_guess_input_line.setText(guesses[img])
         else:
@@ -505,7 +508,7 @@ class Window(QtWidgets.QMainWindow):
 
     def next_survey_image(self, step: int):
         self.current_survey_image += step
-        if self.current_survey_image > len(self.survey_images):
+        if self.current_survey_image >= len(self.survey_images):
             return
         self.canvas.set_pixmap(self.gui.guess_canvas_label, 
                               self.survey_images[self.current_survey_image])
