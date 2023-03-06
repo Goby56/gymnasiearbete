@@ -18,11 +18,11 @@ from gen.survey_dialog import Ui_survey_dialog
 
 sys.path.append(os.getcwd())
 SURVEY_IMAGES_PATH = os.path.join(os.getcwd(), "survey\\images")
+EMNIST_DATASET_PATH = os.path.join(os.getcwd(), "data\\EMNIST")
+ANALYSIS_DIGITS_PATH = os.path.join(os.getcwd(), "analysis\\digit_images")
 SURVEY_GUESSES_PATH = os.path.join(os.getcwd(), "survey\\guesses")
 MODELS_PATH = os.path.join(os.getcwd(), "data\\models")
 TRAINING_GRAPHS_PATH = os.path.join(os.getcwd(), "analysis")
-
-SYMBOL_MAPPINGS = "AaBbCDdEeFfGgHhIJKkLMNnOPQqRrSTtUVWXYZ0123456789"
 
 import sample
 from sample.train import Summary
@@ -61,10 +61,6 @@ class EventHandler:
                 continue
             if event.type() != etype:
                 continue
-            # if type(source) == type(ref):
-            #     continue
-            if type(ref) == SurveyDialog:
-                print(callback)
             if widgets != None and source.objectName() not in widgets:
                 continue
             if tab != None and tab != ref.current_tab:
@@ -143,7 +139,7 @@ class Window(QtWidgets.QMainWindow):
 
         # AI PREDICT
         # self.load_models(blacklist=["test_plot"]) 
-        self.load_models(blacklist=["templates"])
+        self.load_models(blacklist=[".templates"])
 
         # AI TRAIN
         self.model_to_train = None
@@ -191,7 +187,6 @@ class Window(QtWidgets.QMainWindow):
         self.gui.images_left_progress_bar.setValue(0)
 
         # ADD SURVEY SAMPLES
-        self.gui.symbols_to_draw_list.addItems(random.sample(SYMBOL_MAPPINGS, 25))
 
     def eventFilter(self, source: QObject, event: QEvent):
         EventHandler.trigger(self, source, event)
@@ -289,8 +284,8 @@ class Window(QtWidgets.QMainWindow):
             self.gui.plot_toolbar.hide()
             source.setText("▼")
 
-    @EventHandler.onclick("configure_training_button")
-    def select_training_config(self, source: QObject, event: QEvent):
+    @EventHandler.onclick("choose_model_to_train_button")
+    def set_model_to_train(self, source: QObject, event: QEvent):
         f = QtWidgets.QFileDialog.getOpenFileName(self, dir=MODELS_PATH)[0]
         model_name = re.search("[A-z]+(?=\/config\.json)", f)
         if model_name:
@@ -442,15 +437,6 @@ class Window(QtWidgets.QMainWindow):
 
     #region -x-x-x-x-x-x-x-x-x- Tab : Survey Guess -x-x-x-x-x-x-x-x-x-
 
-    @EventHandler.onclick("survey_config_button")
-    def open_survey_dialog(self, source: QObject, event: QEvent):
-        def on_submit(name, path):
-            print(path)
-            # for p in glob.iglob(path+"*")
-            
-        self.survey_dialog = SurveyDialog(on_submit)
-        self.survey_dialog.show()
-
     @EventHandler.onclick("next_image_button")
     @EventHandler.onclick("previous_image_button")
     def update_survey_image(self, source: QObject, event: QEvent):
@@ -523,58 +509,34 @@ class Window(QtWidgets.QMainWindow):
     
     #region -x-x-x-x-x-x-x-x-x- Tab : Survey Draw -x-x-x-x-x-x-x-x-x-
 
+    @EventHandler.onclick("choose_model_mappings_button")
+    def open_folder_selector(self, source: QObject, event: QEvent):
+        f = QtWidgets.QFileDialog.getOpenFileName(self, dir=EMNIST_DATASET_PATH)[0]
+        dataset_name = re.search("emnist-[A-z]+\.mat", f).group()
+        if dataset_name:
+            symbols = list(sample.CompiledDataset(filename=dataset_name).labels)
+            symbols *= 5
+            random.shuffle(symbols)
+            self.gui.symbols_to_draw_list.addItems(symbols)
+
     @EventHandler.on(QEvent.KeyPress, keys=[Qt.Key.Key_Return], tab=3)
     def save_survey_image(self, source: QObject, event: QEvent):
-        if event.isAutoRepeat():
+        if self.gui.symbols_to_draw_list.count() < 1:
+            self.show_dialog(QMessageBox.Icon.Warning, "Error", "No mappings selected", 
+                             "Select mappings by choosing a dataset")
             return
-        # img = downscale_img(self.pixels)
-        # symbol_drawn = self.gui.symbols_to_draw_list.takeItem(0).text()
-        # if symbol_drawn.isdigit():
-        #     prefix = "nu"
-        # elif symbol_drawn.isupper():
-        #     prefix = "up"
-        # elif symbol_drawn.islower():
-        #     prefix = "lo"
-        # drawer = "oscar"
-        # file_name = f"{drawer}_{prefix}_{symbol_drawn}.png"
-        # file_path = os.path.join(survey_file_path, file_name)
-        # img.save(file_path, "PNG")
-        # self.reset_canvas(self.gui.draw_canvas_label)
+        
+        img = self.canvas.downscaled
+        index = 50 - self.gui.symbols_to_draw_list.count() + 50
+        symbol_drawn = self.gui.symbols_to_draw_list.takeItem(0).text()
+        source = self.gui.image_source_line_edit.text()
+
+        file_name = f"{source}_{symbol_drawn}({index}).png"
+        file_path = os.path.join(ANALYSIS_DIGITS_PATH, file_name)
+        img.save(file_path, "PNG")
+        self.canvas.erease(self.gui.draw_canvas_label)
 
     #endregion
-
-class SurveyDialog(QtWidgets.QDialog):
-    def __init__(self, on_submit: callable) -> None:
-        super().__init__()
-        self.gui = Ui_survey_dialog()
-        self.installEventFilter(self)
-        self.setModal(True)
-        self.gui.setupUi(self)
-
-        self.on_submit = on_submit
-        self.folder_selection = ""
-        self.participant_name = ""
-
-    def eventFilter(self, source: QObject, event: QEvent) -> bool:
-        EventHandler.trigger(self, source, event)
-        return QtWidgets.QDialog.eventFilter(self, source, event)
-
-    @EventHandler.onclick("select_directory_button")
-    def open_folder_selector(self, source: QObject, event: QEvent):
-        folder = QtWidgets.QFileDialog.getExistingDirectory(self)
-        if folder:
-            self.folder_selection = folder
-
-    @EventHandler.onclick("submit_config_button")
-    def submit_config(self, source: QObject, event: QEvent):
-        print(self)
-        self.participant_name = self.gui.participant_name_line_edit.text()
-        if self.folder_selection and self.participant_name:
-            self.on_submit(self.participant_name, self.folder_selection)
-        else:
-            # Raise error if not enough information was provided
-            pass
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

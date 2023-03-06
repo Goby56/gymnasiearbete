@@ -107,10 +107,10 @@ class Ui_main_window(object):
 
         self.horizontalLayout_4.addWidget(self.toggle_graph_toolbar)
 
-        self.configure_training_button = QPushButton(self.train_tab)
-        self.configure_training_button.setObjectName(u"configure_training_button")
+        self.choose_model_to_train_button = QPushButton(self.train_tab)
+        self.choose_model_to_train_button.setObjectName(u"choose_model_to_train_button")
 
-        self.horizontalLayout_4.addWidget(self.configure_training_button)
+        self.horizontalLayout_4.addWidget(self.choose_model_to_train_button)
 
         self.horizontalLayout_5 = QHBoxLayout()
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
@@ -216,10 +216,10 @@ class Ui_main_window(object):
 
         self.verticalLayout_4 = QVBoxLayout()
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.survey_add_config_button = QPushButton(self.draw_tab)
-        self.survey_add_config_button.setObjectName(u"survey_add_config_button")
+        self.image_source_line_edit = QLineEdit(self.draw_tab)
+        self.image_source_line_edit.setObjectName(u"image_source_line_edit")
 
-        self.verticalLayout_4.addWidget(self.survey_add_config_button)
+        self.verticalLayout_4.addWidget(self.image_source_line_edit)
 
         self.symbols_to_draw_list = QListWidget(self.draw_tab)
         self.symbols_to_draw_list.setObjectName(u"symbols_to_draw_list")
@@ -229,11 +229,10 @@ class Ui_main_window(object):
 
         self.verticalLayout_4.addWidget(self.symbols_to_draw_list)
 
-        self.start_stop_survey_button = QPushButton(self.draw_tab)
-        self.start_stop_survey_button.setObjectName(u"start_stop_survey_button")
-        self.start_stop_survey_button.setEnabled(True)
+        self.choose_model_mappings_button = QPushButton(self.draw_tab)
+        self.choose_model_mappings_button.setObjectName(u"choose_model_mappings_button")
 
-        self.verticalLayout_4.addWidget(self.start_stop_survey_button)
+        self.verticalLayout_4.addWidget(self.choose_model_mappings_button)
 
 
         self.horizontalLayout_3.addLayout(self.verticalLayout_4)
@@ -260,7 +259,7 @@ class Ui_main_window(object):
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.predict_tab), QCoreApplication.translate("main_window", u"Draw an image and let the AI guess", None))
 #endif // QT_CONFIG(tooltip)
         self.toggle_graph_toolbar.setText(QCoreApplication.translate("main_window", u"\u25bc", None))
-        self.configure_training_button.setText(QCoreApplication.translate("main_window", u"Choose model", None))
+        self.choose_model_to_train_button.setText(QCoreApplication.translate("main_window", u"Choose model", None))
         self.start_stop_training_button.setText(QCoreApplication.translate("main_window", u"Start", None))
         self.pause_resume_training_button.setText(QCoreApplication.translate("main_window", u"Pause", None))
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("main_window", u"Train model", None))
@@ -276,8 +275,8 @@ class Ui_main_window(object):
         self.survey_performance_label.setText("")
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.guess_tab), QCoreApplication.translate("main_window", u"Survey", None))
         self.draw_canvas_label.setText("")
-        self.survey_add_config_button.setText(QCoreApplication.translate("main_window", u"Configure", None))
-        self.start_stop_survey_button.setText(QCoreApplication.translate("main_window", u"Start", None))
+        self.image_source_line_edit.setPlaceholderText(QCoreApplication.translate("main_window", u"Source", None))
+        self.choose_model_mappings_button.setText(QCoreApplication.translate("main_window", u"Choose mappings", None))
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.draw_tab), QCoreApplication.translate("main_window", u"Add survey samples", None))
 #if QT_CONFIG(tooltip)
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.draw_tab), QCoreApplication.translate("main_window", u"Draw a series of images which will be used for testing", None))

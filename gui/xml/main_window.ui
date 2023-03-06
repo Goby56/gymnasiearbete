@@ -171,7 +171,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="configure_training_button">
+           <widget class="QPushButton" name="choose_model_to_train_button">
             <property name="text">
              <string>Choose model</string>
             </property>
@@ -377,9 +377,9 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <widget class="QPushButton" name="survey_add_config_button">
-            <property name="text">
-             <string>Configure</string>
+           <widget class="QLineEdit" name="image_source_line_edit">
+            <property name="placeholderText">
+             <string>Source</string>
             </property>
            </widget>
           </item>
@@ -400,12 +400,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="start_stop_survey_button">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
+           <widget class="QPushButton" name="choose_model_mappings_button">
             <property name="text">
-             <string>Start</string>
+             <string>Choose mappings</string>
             </property>
            </widget>
           </item>
