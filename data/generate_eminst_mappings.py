@@ -8,5 +8,5 @@ PATH = os.path.join(os.getcwd(), "data\\EMNIST")
 assert os.path.exists(PATH)
 
 for model_name in os.listdir(PATH):
-    labels = sample.CompiledDataset(filename=model_name, image_size=(28, 28)).labels
+    labels = sample.CompiledDataset(filename=model_name).labels
     np.save(os.path.join(PATH, f"{model_name}.npy"), labels)

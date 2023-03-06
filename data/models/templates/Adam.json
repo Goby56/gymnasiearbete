@@ -3,27 +3,31 @@
         "structure": {
             "nodes": [784, 128, 128, 26],
             "activations": ["ReLU", "ReLU", "Softmax"]
-        },
-        "mapping": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+        }
     },
 
     "training": {
         "accuracy_function": "Categorical",
         "loss_function": "CCE",
         "optimizer": {
-            "function": "SGD",
+            "function": "Adam",
             "args": {
-                "decay": 0.001,
-                "learn_rate": 0.3
+                "learn_rate": 0.001,
+                "beta_1": 0.9,
+                "beta_2": 0.999,
+                "epsilon": 10e-8,
+                "decay": 0.001
             }
         },
+
         "dataset": "emnist-letters.mat",
-        "batch_size": 1024,
-        "epochs": -1,
+        "batch_size": 128,
+        "epochs": 10,
+        
         "data_augmentation": {
-            "noise": false,
+            "noise": true,
             "shift": false,
-            "rotate": false,
+            "rotate": true,
             "scale": false,
             "blur": false
         }

@@ -143,7 +143,7 @@ class Window(QtWidgets.QMainWindow):
 
         # AI PREDICT
         # self.load_models(blacklist=["test_plot"]) 
-        self.load_models(blacklist=[])
+        self.load_models(blacklist=["templates"])
 
         # AI TRAIN
         self.model_to_train = None
