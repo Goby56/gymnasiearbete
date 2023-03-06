@@ -258,13 +258,12 @@ class Window(QtWidgets.QMainWindow):
         self.gui.model_selector.clear()
         self.gui.model_selector.addItems(self.models.keys())
 
-    def get_prediction(self, model_name: str, standardize=False) -> list[tuple[str, int]]:
+    def get_prediction(self, model_name: str) -> list[tuple[str, int]]:
         """
         Does a forward pass with the given model and return a sorted list of probabilities.
 
         Args:
             (model_name) The model name as it apears in the "./data/models" folder.
-            (standardize) If the canvas image should be standardized. Set to True as defualt.
         Returns:
             (sorted_probabilities) a sorted list of tupels in the form of (label: str, prob: int)
         """
@@ -273,7 +272,6 @@ class Window(QtWidgets.QMainWindow):
         image = self.canvas.downscaled.convert("L")
         in_vec = np.asarray(image).flatten()
         in_vec.shape = (1, len(in_vec))
-        #in_vec = sample.CompiledDataset.standardize_image(in_vec) if standardize else in_vec / 255
         out_vec = ai.network.forward(in_vec).flatten()
         guess = list(zip(ai.model.mapping, out_vec))
         return sorted(guess, key=lambda x: x[1], reverse=True)

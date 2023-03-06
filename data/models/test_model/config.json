@@ -17,14 +17,12 @@
             }
         },
         "dataset": "emnist-balanced.mat",
-        "batch_size": 1024,
+        "batch_size": 256,
         "epochs": -1,
         "data_augmentation": {
             "noise": false,
             "shift": false,
-            "rotate": false,
-            "scale": false,
-            "blur": false
+            "rotate": false
         }
     }
 }

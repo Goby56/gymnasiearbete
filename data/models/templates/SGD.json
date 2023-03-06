@@ -1,7 +1,7 @@
 {
     "setup": {
         "structure": {
-            "nodes": [784, 128, 128, 26],
+            "nodes": [784, 128, 128, 47],
             "activations": ["ReLU", "ReLU", "Softmax"]
         }
     },
@@ -17,16 +17,14 @@
             }
         },
 
-        "dataset": "emnist-letters.mat",
+        "dataset": "emnist-balanced.mat",
         "batch_size": 128,
-        "epochs": 10,
+        "epochs": -1,
         
         "data_augmentation": {
             "noise": false,
             "shift": false,
-            "rotate": false,
-            "scale": false,
-            "blur": false
+            "rotate": false
         }
     }
 }
