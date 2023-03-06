@@ -152,22 +152,29 @@ class CompiledDataset:
         """
         return convert_label(hot_vector, self.labels)
 
-    def get(self, amount: int, convert: bool=False) -> tuple[np.ndarray, Union[str, np.ndarray]]:
+    def get(self, amount: int, convert: bool = False, target: str = "train") -> tuple[np.ndarray, Union[str, np.ndarray]]:
         """
         OBS! This function exasuts the training data generator
         Arguments:
             amount: int --- the amount of data-points to be retrived
             convert: bool = False --- if the data-point(s) should be converted into thier readable formats
+            target: str = 'train' --- target dataset, can be 'train' or 'test'
         Returns:
             tuple[np.ndarray, Union[str, np.ndarray]] --- returns a tuple with the image and the label, 
                                                           if converted the label is a string else a np.ndarray
         """
+        assert target in ["train", "test"], f"arg. target must be 'train' or 'test' not {target}"
+        
         def conv(data):
             images, labels = zip(*data)
+            images = map(lambda arr: arr.reshape(28,28), images)
             labels = map(self.convert_label, labels)
             return list(zip(images, labels))
 
-        data = self.next_batch(amount)
+        if target == "train":
+            data = self.next_batch(amount)
+        else:
+            data = self.next_test_batch(amount)
         if amount > 1:
             return conv(data) if convert else next(data)
         return conv(data)[0] if convert else next(data)
