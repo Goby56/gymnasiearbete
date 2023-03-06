@@ -147,10 +147,10 @@ class Ui_main_window(object):
 
         self.verticalLayout_3 = QVBoxLayout()
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.survey_config_button = QPushButton(self.guess_tab)
-        self.survey_config_button.setObjectName(u"survey_config_button")
+        self.participant_name_line_edit = QLineEdit(self.guess_tab)
+        self.participant_name_line_edit.setObjectName(u"participant_name_line_edit")
 
-        self.verticalLayout_3.addWidget(self.survey_config_button)
+        self.verticalLayout_3.addWidget(self.participant_name_line_edit)
 
         self.image_guess_input_line = QLineEdit(self.guess_tab)
         self.image_guess_input_line.setObjectName(u"image_guess_input_line")
@@ -160,7 +160,12 @@ class Ui_main_window(object):
         font1.setFamilies([u"Consolas"])
         font1.setPointSize(72)
         self.image_guess_input_line.setFont(font1)
+        self.image_guess_input_line.setLayoutDirection(Qt.LeftToRight)
         self.image_guess_input_line.setAutoFillBackground(False)
+        self.image_guess_input_line.setStyleSheet(u"")
+        self.image_guess_input_line.setInputMethodHints(Qt.ImhNone)
+        self.image_guess_input_line.setMaxLength(1)
+        self.image_guess_input_line.setFrame(True)
 
         self.verticalLayout_3.addWidget(self.image_guess_input_line)
 
@@ -258,8 +263,9 @@ class Ui_main_window(object):
         self.mode_selector_tab.setTabToolTip(self.mode_selector_tab.indexOf(self.train_tab), QCoreApplication.translate("main_window", u"Create and train a new or existing model", None))
 #endif // QT_CONFIG(tooltip)
         self.guess_canvas_label.setText("")
-        self.survey_config_button.setText(QCoreApplication.translate("main_window", u"Configure", None))
+        self.participant_name_line_edit.setPlaceholderText(QCoreApplication.translate("main_window", u"Participant name", None))
         self.image_guess_input_line.setText("")
+        self.image_guess_input_line.setPlaceholderText(QCoreApplication.translate("main_window", u"?", None))
         self.next_image_button.setText(QCoreApplication.translate("main_window", u"Next Image", None))
         self.previous_image_button.setText(QCoreApplication.translate("main_window", u"Previous Image", None))
         self.mode_selector_tab.setTabText(self.mode_selector_tab.indexOf(self.guess_tab), QCoreApplication.translate("main_window", u"Survey", None))

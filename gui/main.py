@@ -181,7 +181,7 @@ class Window(QtWidgets.QMainWindow):
         self.loss_ax.legend(lines, labels, loc="center left")
 
         # SURVEY STUFF
-        self.survey_participant = "william"
+        self.survey_participant = ""
         self.survey_images = self.load_images(SURVEY_IMAGES_PATH)
         random.seed(69)
         random.shuffle(self.survey_images)
@@ -483,7 +483,8 @@ class Window(QtWidgets.QMainWindow):
             self.gui.image_guess_input_line.clear()
 
     def get_guesses(self):
-        guess_file = SURVEY_GUESSES_PATH+f"\\{self.survey_participant}.json"
+        name = self.gui.participant_name_line_edit.text()
+        guess_file = SURVEY_GUESSES_PATH+f"\\{name}.json"
         if not os.path.exists(guess_file):
             with open(guess_file, "w") as f:
                 guesses = {}
@@ -494,7 +495,8 @@ class Window(QtWidgets.QMainWindow):
         return guesses
     
     def save_guess(self, image: str, guess: str):
-        guess_file = SURVEY_GUESSES_PATH+f"\\{self.survey_participant}.json"
+        name = self.gui.participant_name_line_edit.text()
+        guess_file = SURVEY_GUESSES_PATH+f"\\{name}.json"
         guesses = self.get_guesses()
         guesses[image] = guess
         with open(guess_file, "w") as f:

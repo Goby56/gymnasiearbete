@@ -235,9 +235,9 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QPushButton" name="survey_config_button">
-            <property name="text">
-             <string>Configure</string>
+           <widget class="QLineEdit" name="participant_name_line_edit">
+            <property name="placeholderText">
+             <string>Participant name</string>
             </property>
            </widget>
           </item>
@@ -261,11 +261,29 @@
               <pointsize>72</pointsize>
              </font>
             </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
             <property name="autoFillBackground">
              <bool>false</bool>
             </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="inputMethodHints">
+             <set>Qt::ImhNone</set>
+            </property>
             <property name="text">
              <string/>
+            </property>
+            <property name="maxLength">
+             <number>1</number>
+            </property>
+            <property name="frame">
+             <bool>true</bool>
+            </property>
+            <property name="placeholderText">
+             <string>?</string>
             </property>
            </widget>
           </item>
