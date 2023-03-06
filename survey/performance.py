@@ -1,5 +1,7 @@
 import os, re, json
 from PIL import Image
+import collections
+
 name = input()
 GUESSES_PATH = os.path.join(os.getcwd(), f"survey\\guesses\\{name}")
 IMAGE_PATH = os.path.join(os.getcwd(), f"survey\\images")
@@ -7,22 +9,11 @@ IMAGE_PATH = os.path.join(os.getcwd(), f"survey\\images")
 with open(GUESSES_PATH, "r") as f:
     guesses = json.load(f)
 
-incorrect_img = []
-correct = 0
+guess = collections.namedtuple("guess", ["ans", "guess", "filename"])
+wrong_guess = []
+
 for k, v in guesses.items():
-    letter = re.sub("\(\d\)", "", k)
-    if re.search(".(?=\.png)", letter).group() == v:
-        correct += 1
-    else:
-        incorrect_img.append((k, v))
+    ans = re.sub("(?<=_)\S", "", k)
+    if ans != v:
+        wrong_guess.append(guess(ans=ans, guess=v, filename=k))
 
-print(correct / len(guesses))
-
-for img_name, guess in incorrect_img:
-    if "emnist" in img_name:
-        continue
-    print(guess, img_name)
-    if input("Show?") == "y":
-        img = Image.open(IMAGE_PATH+f"\\{img_name}")
-        img.show()
-        input()
