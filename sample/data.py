@@ -7,22 +7,6 @@ import random
 
 IMAGE_SIZE = (28, 28)
 
-def convert_image(flat_array: np.ndarray, standardized=True) -> np.ndarray:
-        """
-        un-standardizes values if standardize=True
-        Arguments:
-            flat_array: np.ndarray --- a flat np.ndarray with length image_size[0]*image_size[1]
-        Returns:
-            np.ndarray --- a np.ndarray with shape image_size
-        """
-        new_array = flat_array.reshape(IMAGE_SIZE)
-        if standardized:
-            # Remap values to 0 - 255
-            new_array = np.interp(new_array, (new_array.min(), new_array.max()), (0, 255)) 
-        else:
-            new_array *= 255
-        return new_array
-
 def convert_label(hot_vector: np.ndarray, mapping: list) -> str:
     """
     Arguments:
@@ -54,7 +38,6 @@ class CompiledDataset:
     def __init__(self, *,
         filename: str,
         validation_partition = True,
-        standardize = True,
         data_augmentation: dict = {},
         subtract_label = False
     ):
@@ -67,7 +50,6 @@ class CompiledDataset:
         self.__subtract_label = subtract_label
 
         self.validation_partition = validation_partition
-        self.is_standardized = standardize
 
         self.augmentations = {
             "rotate": False, 
@@ -114,30 +96,24 @@ class CompiledDataset:
         for image, label in zip(targeted_data["images"][interval], targeted_data["labels"][interval]):
             image = np.flip(np.rot90(np.reshape(image, IMAGE_SIZE), -1), -1)
 
-            if self.augmentations["rotate"]:
-                new_img = Image.fromarray(image, "L")
-                new_img = new_img.rotate(random.randint(-30, 30), resample=Image.BICUBIC)
-                image = np.asarray(new_img)
+            if target == "train":
+                if self.augmentations["rotate"]:
+                    new_img = Image.fromarray(image, "L")
+                    new_img = new_img.rotate(random.randint(-30, 30), resample=Image.BICUBIC)
+                    image = np.asarray(new_img)
 
-            if self.augmentations["shift"]:
-                array = np.asarray(image)
-                for i in range(28):
-                    if np.any(array[:,i]) or np.any(array[:,27-i]):
-                        break
-                image = np.roll(array, random.randint(-i, i))
+                if self.augmentations["shift"]:
+                    array = np.asarray(image)
+                    for i in range(IMAGE_SIZE[0]):
+                        if np.any(array[:,i]) or np.any(array[:,IMAGE_SIZE[0]-1-i]):
+                            break
+                    image = np.roll(array, random.randint(-i, i))
 
-            if self.augmentations["noise"]:
-                new_img = (image + np.random.random(image.shape) * 255 * 0.5).astype(int)
-                image = np.clip(new_img, 0, 255)
+                if self.augmentations["noise"]:
+                    new_img = (image + np.random.random(image.shape) * 255 * 0.5).astype(int)
+                    image = np.clip(new_img, 0, 255)
             
-
-            image=image.flatten()
-
-            if self.is_standardized:
-                image = self.standardize_image(image)
-            else:
-                image = image.astype(float) / 255
-            
+            image=image.flatten()     
             label = self.__to_hot_vector(label)
 
             yield (image, label)
@@ -146,10 +122,6 @@ class CompiledDataset:
         out = np.zeros(len(self.labels))
         out[index_int-self.__subtract_label] = 1
         return out
-    
-    @staticmethod
-    def standardize_image(flat_array):
-        return (flat_array - np.mean(flat_array)) / np.std(flat_array)
 
     #endregion private shit
 
@@ -170,16 +142,6 @@ class CompiledDataset:
                 next(self.test_data)
                 break
             yield sample
-
-    def convert_image(self, flat_array: np.ndarray) -> np.ndarray:
-        """
-        un-standardizes values if standardize=True
-        Arguments:
-            flat_array: np.ndarray --- a flat np.ndarray with length image_size[0]*image_size[1]
-        Returns:
-            np.ndarray --- a np.ndarray with shape image_size
-        """
-        return convert_image(flat_array, standardized=self.is_standardized)
 
     def convert_label(self, hot_vector: np.ndarray) -> str:
         """
@@ -202,7 +164,6 @@ class CompiledDataset:
         """
         def conv(data):
             images, labels = zip(*data)
-            images = map(self.convert_image, images)
             labels = map(self.convert_label, labels)
             return list(zip(images, labels))
 

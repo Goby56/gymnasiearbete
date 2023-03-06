@@ -1,11 +1,8 @@
 import numpy as np
 import itertools
 
-
 from . import model, layer
 
-
-# TODO: Move standardization from dataset to network. option has been added to config.
 class Network:
     def __init__(self, model: model.Model):
         self.model = model
@@ -15,23 +12,29 @@ class Network:
             weights, biases = self.model.load_wnb()
         else:
             # Initialize weights and biases
-            weights = list(map(self.init_weights,
+            weights = list(map(self.__init_weights,
                 itertools.pairwise(self.model.structure["nodes"])))
-            biases = list(map(self.init_biases, 
+            biases = list(map(self.__init_biases, 
                 self.model.structure["nodes"][1:]))
 
         # Create layers
         self.layers = [layer.Layer(w, b, a()) for w, b, a in 
             zip(weights, biases, self.model.structure["activations"])]
 
-    def init_weights(self, size):
+    def __init_weights(self, size):
         return 0.01 * np.random.randn(*size)
 
-    def init_biases(self, size):
+    def __init_biases(self, size):
         return np.zeros(shape=size)
 
+    def __standardize(self, array) -> np.ndarray:
+        if np.any(array):
+            return (array - np.mean(array)) / np.std(array)
+        return array
+
     def forward(self, samples: np.ndarray):
-        output = self.layers[0].forward(samples)
+        std_data = self.__standardize(samples)
+        output = self.layers[0].forward(std_data)
         for layer in self.layers[1:]:
             output = layer.forward(output)
         
