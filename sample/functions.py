@@ -34,18 +34,6 @@ class Activation_ReLU:
         inputs[self.inputs <= 0] = 0
         return inputs
 
-class Activation_ReLU6:
-    # INTE TESTAT
-    def forward(self, inputs):
-        self.inputs = inputs
-        return np.maximum(0, np.minimum(inputs, 6))
-
-    def backward(self, dvalues):
-        inputs = dvalues.copy()
-        inputs[np.logical_and(6 <= self.inputs, self.inputs >= 0)] = 0
-        return inputs
-
-
 class Activation_Sigmoid:
     def forward(self, X):
         self.inputs = X
@@ -53,6 +41,15 @@ class Activation_Sigmoid:
 
     def backward(self, X):
         return self.inputs * self.forward(X) * (1- self.forward(X))
+    
+class Activation_Tanh:
+    def forward(self, X):
+        return np.tanh(X)
+    
+    def backward(self, X):
+        return (1 - np.tanh(X)**2)
+
+
 
 # endregion Activation
 
@@ -173,7 +170,7 @@ class Optimizer_SGD(Optimzer):
 
 
 class Optimizer_Adam(Optimzer):
-    # Behöver testas
+    
     def __init__(self, *, learn_rate, decay, epsilon, beta_1, beta_2):
         self.learn_rate = learn_rate
         self.current_learn_rate = learn_rate
