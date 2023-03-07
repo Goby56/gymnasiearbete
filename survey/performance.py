@@ -9,6 +9,7 @@ labels = sample.CompiledDataset(filename="emnist-balanced.mat").labels
 name = input()
 GUESSES_PATH = os.path.join(os.getcwd(), f"survey\\guesses\\{name}")
 IMAGE_PATH = os.path.join(os.getcwd(), f"survey\\images")
+WRONG_SHEET_PATH = os.path.join(os.getcwd(), f"survey\\results")
 
 class Guess(NamedTuple):
     ans: str
@@ -60,4 +61,6 @@ top_five_wrong = [occurences[k] for k in sorted(occurences.keys(), reverse=True)
 
 
 wrong_sheet.show()
-print(top_five_wrong)
+# wrong_sheet.save(WRONG_SHEET_PATH + f"\\{name}.png")
+
+print(len(wrong_guesses))
