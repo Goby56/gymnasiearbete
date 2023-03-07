@@ -287,7 +287,7 @@ class Window(QtWidgets.QMainWindow):
     @EventHandler.onclick("choose_model_to_train_button")
     def set_model_to_train(self, source: QObject, event: QEvent):
         f = QtWidgets.QFileDialog.getOpenFileName(self, dir=MODELS_PATH)[0]
-        model_name = re.search("[A-z]+(?=\/config\.json)", f)
+        model_name = re.search("(?<=models/)\S+(?=\/config\.json)", f)
         if model_name:
             self.model_to_train = model_name.group()
 
