@@ -1,8 +1,9 @@
 import os, sys, re
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 sys.path.append(os.getcwd())
+font = ImageFont.truetype("arial.ttf", 12)
 
 import sample
 
@@ -14,6 +15,12 @@ PATH_DIGIT_IMAGES = os.path.join(os.getcwd(), "analysis\\digit_images")
 print("Image sets available: 300 | 200 | 100")
 # 300 is used for model choosing, 200 is for comparison (AI vs Human)
 # 100 is digits used for specialized vs general 
+
+def corrected_guess_overlay(img28x28: Image.Image, correct: str, guess: str):
+    draw = ImageDraw.Draw(img28x28)
+    draw.text((0,0), guess, "red", font)
+    draw.text((0,14), correct, "green", font)
+    return np.asarray(img28x28)
 
 while True:
     model_name, image_set = input("Model name & image set -> ").split(" ")
