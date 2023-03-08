@@ -32,23 +32,20 @@ while True:
         return re.search("(?<=_).", filename)[0]
 
     images = [(os.path.join(PATH_IMAGES, filename), get_ans(filename)) 
-            for filename in os.listdir(PATH_IMAGES) if not "emnist" in filename]
+            for filename in os.listdir(PATH_IMAGES)]# if not "emnist" in filename]
     extra_images = [(os.path.join(PATH_EXTRA_IMAGES, filename), 
                     get_ans(filename)) for filename in os.listdir(PATH_EXTRA_IMAGES)]
     
-    images = images + extra_images
     # images = [(os.path.join(PATH_DIGITS, filename), 
     #                 get_ans(filename)) for filename in os.listdir(PATH_DIGITS)]
 
-    for path, key in images:
+    for path, key in images:# + extra_images:
         image = Image.open(path).convert("L")
         guess(image, key)
 
-    for data in dataset.get(150, convert=True, target="test"):
-        guess(*data)
+    # for data in dataset.get(150, convert=True, target="test"):
+    #     guess(*data)
 
     print(res_cache, res_cache[1]/sum(res_cache))
-
-
 
     
