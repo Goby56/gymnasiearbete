@@ -1,10 +1,10 @@
-import sys, cv2, os, random, glob, json, re, collections, matplotlib, time
-import threading
-import numpy as np
-from scipy.interpolate import BPoly
+import sys, os, random, glob, json, re, collections, time, threading
+import numpy as np, cv2
 
+from typing import List, NamedTuple
+
+from scipy.interpolate import BPoly
 from PIL import Image, ImageDraw, ImageFilter, ImageQt
-from typing import List, NamedTuple, Union
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import QMessageBox
@@ -14,7 +14,6 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.figure import Figure as MatplotFigure
 
 from gen.main_window import Ui_main_window
-from gen.survey_dialog import Ui_survey_dialog
 
 sys.path.append(os.getcwd())
 SURVEY_IMAGES_PATH = os.path.join(os.getcwd(), "survey\\images")
