@@ -1,4 +1,4 @@
-import os, sys, re
+import os, sys, re, itertools
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
@@ -17,10 +17,11 @@ print("Image sets available: 300 | 200 | 100")
 # 100 is digits used for specialized vs general 
 
 def corrected_guess_overlay(img28x28: Image.Image, correct: str, guess: str):
-    draw = ImageDraw.Draw(img28x28)
+    rgb_image = img28x28.convert("RGB")
+    draw = ImageDraw.Draw(rgb_image)
     draw.text((0,0), guess, "red", font)
     draw.text((0,14), correct, "green", font)
-    return np.asarray(img28x28)
+    return np.asarray(rgb_image)
 
 while True:
     model_name, image_set = input("Model name & image set -> ").split(" ")
@@ -29,19 +30,22 @@ while True:
         continue
     model = sample.Model(model_name)
     network = sample.Network(model)
-    dataset = sample.CompiledDataset(
-        filename=model.dataset
-    )
 
     res_cache = [0, 0] # num failed, num sucsess
+    wrong_guesses = []
 
-    def guess(image, ans):
+    def guess(image, key):
         array = np.asarray(image)
         array.shape = (1, array.size)
 
         out_vec = network.forward(array)
         i = np.where(out_vec == out_vec.max())[1][0]
-        res_cache[ans == model.mapping[i]] += 1
+        ans = model.mapping[i]
+        correct = key == ans or (ans.isalpha() and not key in model.mapping 
+                                   and ans.upper() == key.upper())
+        res_cache[correct] += 1
+        if not correct:
+            wrong_guesses.append((image, key, ans))
 
     def get_ans(filename):
         return re.search("(?<=_).", filename)[0]
@@ -63,5 +67,8 @@ while True:
     for path, key in images:
         image = Image.open(path).convert("L")
         guess(image, key)
+
+    arrays = itertools.starmap(corrected_guess_overlay, wrong_guesses)
+    Image.fromarray(np.concatenate(list(arrays), axis=1)).show()
 
     print(res_cache, res_cache[1]/sum(res_cache))
