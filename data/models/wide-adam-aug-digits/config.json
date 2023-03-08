@@ -1,0 +1,33 @@
+{
+    "setup": {
+        "structure": {
+            "nodes": [784, 512, 512, 10],
+            "activations": ["ReLU", "ReLU", "ReLU", "Softmax"]
+        }
+    },
+
+    "training": {
+        "accuracy_function": "Categorical",
+        "loss_function": "CCE",
+        "optimizer": {
+            "function": "Adam",
+            "args": {
+                "learn_rate": 0.001,
+                "beta_1": 0.9,
+                "beta_2": 0.999,
+                "epsilon": 10e-8,
+                "decay": 0.001
+            }
+        },
+
+        "dataset": "emnist-digits.mat",
+        "batch_size": 256,
+        "epochs": 5,
+        
+        "data_augmentation": {
+            "noise": true,
+            "shift": true,
+            "rotate": true
+        }
+    }
+}
