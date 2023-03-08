@@ -22,7 +22,7 @@ EMNIST_DATASET_PATH = os.path.join(os.getcwd(), "data\\EMNIST")
 ANALYSIS_DIGITS_PATH = os.path.join(os.getcwd(), "analysis\\digit_images")
 SURVEY_GUESSES_PATH = os.path.join(os.getcwd(), "survey\\guesses")
 MODELS_PATH = os.path.join(os.getcwd(), "data\\models")
-TRAINING_GRAPHS_PATH = os.path.join(os.getcwd(), "analysis")
+TRAINING_GRAPHS_PATH = os.path.join(os.getcwd(), "analysis\\models")
 
 import sample
 from sample.train import Summary
