@@ -229,7 +229,7 @@ class Window(QtWidgets.QMainWindow):
                      mbuttons=[Qt.MouseButton.LeftButton])
     def display_prediction(self, source: QObject, event: QEvent):
         guesses = self.get_prediction(self.selected_model)
-        fomatted_guesses = [f"{p[0]}:{p[1]*100:.0f}%" for p in guesses]
+        fomatted_guesses = [f"{p[0]}:{p[1]*100:.1f}%" if p[1]>0.001 else f"{p[0]}:<0.1%" for p in guesses]
         self.gui.prediction_probability_list.clear()
         self.gui.prediction_probability_list.addItems(fomatted_guesses)
 
