@@ -9,6 +9,8 @@ import sample
 PATH_EXTRA_IMAGES = os.path.join(os.getcwd(), "survey\\extra_images")
 PATH_IMAGES = os.path.join(os.getcwd(), "survey\\images")
 
+PATH_DIGITS = os.path.join(os.getcwd(), "analysis\\digit_images")
+
 while True:
     model = sample.Model(input("AI name: "))
     network = sample.Network(model)
@@ -33,8 +35,12 @@ while True:
             for filename in os.listdir(PATH_IMAGES) if not "emnist" in filename]
     extra_images = [(os.path.join(PATH_EXTRA_IMAGES, filename), 
                     get_ans(filename)) for filename in os.listdir(PATH_EXTRA_IMAGES)]
+    
+    images = images + extra_images
+    # images = [(os.path.join(PATH_DIGITS, filename), 
+    #                 get_ans(filename)) for filename in os.listdir(PATH_DIGITS)]
 
-    for path, key in images + extra_images:
+    for path, key in images:
         image = Image.open(path).convert("L")
         guess(image, key)
 
