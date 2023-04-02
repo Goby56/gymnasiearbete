@@ -86,7 +86,6 @@ if __name__ == "__main__":
             img = Image.open(IMAGE_PATH+f"\\{guess.fname}")
             img = img.resize((upscaling*28, upscaling*28), resample=Image.Resampling.BOX)
             draw = ImageDraw.Draw(img)
-            # text = Image.new("RGB", (upscaling*28, font_size))
             draw.text((0,0), guess.guess, "red", font)
             draw.text((0,upscaling*14), guess.ans, "green", font)
             
